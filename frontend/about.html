@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About & Contact - LifeLink</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+    <!-- --- NAVIGATION BAR --- -->
+    <nav class="navbar navbar-expand-lg glass-navbar fixed-top py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                <i class="fa-solid fa-droplet text-danger fs-3"></i>
+                <span class="fs-4 fw-bold" style="font-family: var(--font-heading);">LifeLink</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold active" href="about.html">About & Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <div class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark/Light Mode">
+                            <i class="fa-solid fa-moon"></i>
+                        </div>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-premium-outline" href="login.html">Login Portal</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-premium" href="register.html">Sign Up</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- --- ABOUT MAIN SECTION --- -->
+    <main class="container my-5 pt-5">
+        <div class="row pt-5 align-items-center g-5 mb-5">
+            <div class="col-md-6">
+                <span class="text-danger fw-bold text-uppercase">Who We Are</span>
+                <h1 class="display-5 fw-bold mb-3" style="font-family: var(--font-heading);">LifeLink Mission</h1>
+                <p class="lead text-secondary mb-3">
+                    We bridge the communication gap between local blood donors, active patients, and emergency rooms during clinical crises. 
+                </p>
+                <p class="text-secondary">
+                    Standard blood drives and bank structures are slow and geographically static. In an emergency hemorrhage, surgery trauma, or urgent treatment need, every minute counts. LifeLink harnesses the power of advanced geodetic tracking and machine learning classifiers to pair patients with active, matching, high-probability donor profiles in seconds.
+                </p>
+            </div>
+            <div class="col-md-6 text-center animate-float">
+                <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=500" class="img-fluid rounded-lg shadow-lg border" alt="AI Healthcare Research">
+            </div>
+        </div>
+
+        <!-- --- FAQS ACCORDION --- -->
+        <section class="mb-5 pb-5">
+            <div class="text-center mb-5">
+                <span class="text-danger fw-bold text-uppercase">FAQs</span>
+                <h2 class="fw-bold" style="font-family: var(--font-heading);">Clinical & Platform Guidelines</h2>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item glass-card mb-3 border-0 rounded-md">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    What is the mandatory rest cooldown time between donations?
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-secondary fs-7">
+                                    According to clinical safety regulations, a mandatory cooldown buffer of **90 days (3 months)** is required between whole blood donations. This ensures the donor's hemoglobin and iron indexes completely recover.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item glass-card mb-3 border-0 rounded-md">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    How does the AI Recommendation Score work?
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-secondary fs-7">
+                                    Our smart recommendation algorithm scores donor suitability on a scale of 0 to 100 based on four clinical weights:
+                                    <br>• **Clinical Compatibility (40%)**: Blood compatibility matches (exact vs compatible).
+                                    <br>• **Proximity distance (30%)**: Distance computed using the Haversine formula from coordinates.
+                                    <br>• **Eligibility check (10%)**: Verification of the 90-day rest cooldown criteria.
+                                    <br>• **Historical response speed (20%)**: Historical response time history recorded by the donor.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item glass-card mb-3 border-0 rounded-md">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                    What makes O Negative blood so unique?
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-secondary fs-7">
+                                    O Negative (O-) red blood cells lack the A, B, and Rh antigen proteins. This means O- blood can be safely transfused to patients of **any blood group** without causing severe adverse immune reactions. It is highly valued as the universal donor in critical trauma cases where the patient's blood type is unknown.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- --- CONTACT SECTION --- -->
+        <section class="py-5 border-top">
+            <div class="row g-5">
+                <div class="col-md-5">
+                    <span class="text-danger fw-bold text-uppercase">Support Desk</span>
+                    <h2 class="fw-bold mb-4" style="font-family: var(--font-heading);">Get in Touch</h2>
+                    <p class="text-secondary mb-4">
+                        Do you have inquiries regarding hospital system integrations, technical API endpoints, or organizational blood drives? Submit your details, and our administrator team will contact you.
+                    </p>
+                    
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="fs-2 text-danger"><i class="fa-solid fa-map-pin"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-0">Platform Headquarters</h6>
+                            <span class="fs-7 text-secondary">100 Tech Park Way, Bengaluru, KA 560001</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="fs-2 text-danger"><i class="fa-solid fa-phone-volume"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-0">Emergency Helpdesk</h6>
+                            <span class="fs-7 text-secondary">+1-555-911-LIFE (Toll Free 24/7)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-7">
+                    <div class="glass-card p-4 p-sm-5 shadow-sm">
+                        <h4 class="fw-bold mb-4">Send a Message</h4>
+                        <form id="contact-form" onsubmit="event.preventDefault(); showToast('Message Sent!', 'Thank you. Our administrator support will review your query shortly.', 'success');">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Full Name</label>
+                                    <input type="text" class="form-control" placeholder="Jane Doe" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Email Address</label>
+                                    <input type="email" class="form-control" placeholder="jane@domain.com" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Subject</label>
+                                <input type="text" class="form-control" placeholder="Hospital Partnership Inquiry" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Message Details</label>
+                                <textarea class="form-control" rows="4" placeholder="How can we assist your clinical operations?" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-premium w-100 py-3 fw-bold">
+                                <i class="fa-solid fa-paper-plane me-2"></i>Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- --- FOOTER --- -->
+    <footer class="bg-dark text-white pt-5 pb-4">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-droplet text-danger me-2"></i>LifeLink</h5>
+                    <p class="text-muted fs-7">
+                        Revolutionizing emergency medical logistics through AI. Empowering local communities to match compatible donors and save lives in real-time.
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-bold mb-3">Quick Navigation</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-muted fs-7">Home</a></li>
+                        <li><a href="about.html" class="text-muted fs-7">About Us</a></li>
+                        <li><a href="login.html" class="text-muted fs-7">Portal Login</a></li>
+                        <li><a href="register.html" class="text-muted fs-7">Sign Up</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-5">
+                    <h6 class="fw-bold mb-3">Emergency Contact</h6>
+                    <p class="text-muted fs-7 mb-1"><i class="fa-solid fa-phone text-danger me-2"></i>LifeLink Hotline: **+1-555-911-LIFE** (24/7)</p>
+                    <p class="text-muted fs-7 mb-3"><i class="fa-solid fa-envelope text-danger me-2"></i>Support Email: emergency@lifelinkai.com</p>
+                </div>
+            </div>
+            <hr class="border-secondary my-4">
+            <div class="text-center text-muted fs-8">
+                &copy; 2026 LifeLink AI Blood Finder. Developed with absolute precision for emergency healthcare connectivity. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- --- FLOATING CHATBOT WIDGET --- -->
+    <div class="chatbot-trigger" id="chatbot-trigger" title="LifeLink AI Assistant">
+        <i class="fa-solid fa-comments fs-4"></i>
+    </div>
+    
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-robot"></i>
+                <span class="fw-bold fs-6">LifeLink AI Assistant</span>
+            </div>
+            <i class="fa-solid fa-times cursor-pointer" id="chatbot-close-btn"></i>
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages"></div>
+        <div class="chatbot-tips" id="chatbot-tips"></div>
+        <div class="chatbot-input-container">
+            <input type="text" id="chatbot-input" placeholder="Type clinical query...">
+            <button class="chatbot-mic-btn" id="chatbot-mic-btn" title="Speak to Search">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+            <button class="chatbot-send-btn" id="chatbot-send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- --- TOAST NOTIFICATIONS HOLDER --- -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Core Application Frontend JS -->
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

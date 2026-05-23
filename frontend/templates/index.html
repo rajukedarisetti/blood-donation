@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeLink – AI Blood Donation Finder</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <!-- Custom Style Sheet -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-primary">
+
+    <!-- Sticky Glass Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-top glass-card border-0 rounded-0 py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="fa-solid fa-droplet text-danger me-2 fs-3 floating-element"></i>
+                <span class="fs-4 fw-bold text-primary">Life<span class="text-danger">Link</span></span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    <li class="nav-item"><a class="nav-link text-secondary" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link text-secondary" href="#how-it-works">How It Works</a></li>
+                    <li class="nav-item"><a class="nav-link text-secondary" href="#stats">Impact</a></li>
+                    <li class="nav-item">
+                        <button class="btn btn-link text-secondary px-2 border-0" onclick="toggleTheme()">
+                            <i id="theme-icon" class="fa-solid fa-sun"></i>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/auth" class="glow-btn px-4 py-2 text-decoration-none">Access Platform</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container mt-5">
+            <div class="row align-items-center min-vh-75 py-5">
+                <div class="col-lg-6">
+                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill mb-3 fw-semibold">
+                        <i class="fa-solid fa-bolt me-1"></i> AI-Powered Coordination
+                    </span>
+                    <h1 class="display-4 fw-bold lh-sm text-primary mb-3">
+                        Save Lives with <span class="text-danger glow-text">AI-Powered</span> Blood Connectivity
+                    </h1>
+                    <p class="lead text-secondary mb-4">
+                        Connecting blood donors with patients and hospitals during emergencies in real-time. Driven by smart proximity algorithms, availability forecasting, and severity classification.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        <a href="/auth?tab=register&role=donor" class="glow-btn text-decoration-none"><i class="fa-solid fa-hand-holding-hand me-2"></i> Register as Donor</a>
+                        <a href="/auth?tab=register&role=patient" class="outline-btn text-decoration-none"><i class="fa-solid fa-truck-medical me-2"></i> Request Blood</a>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 text-secondary">
+                        <span class="d-flex align-items-center gap-1"><i class="fa-solid fa-circle text-success fs-6"></i> 100% Secure</span>
+                        <span>•</span>
+                        <span class="d-flex align-items-center gap-1"><i class="fa-solid fa-shield-halved text-danger fs-6"></i> HIPPA Compliant</span>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0">
+                    <!-- Emergency Blood Simulator Panel -->
+                    <div class="glass-card">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h4 class="mb-0"><i class="fa-solid fa-magnifying-glass-location text-danger me-2"></i> Nearby Match Finder</h4>
+                            <span class="badge bg-success bg-opacity-15 text-success">Live Mock Search</span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small">REQUIRED BLOOD GROUP</label>
+                            <select class="form-select bg-dark border-secondary text-white py-3 rounded-3" id="sim-blood-group">
+                                <option value="O-">O- (Universal Donor)</option>
+                                <option value="A+">A+</option>
+                                <option value="B+">B+</option>
+                                <option value="AB+">AB+ (Universal Recipient)</option>
+                            </select>
+                        </div>
+                        <button class="glow-btn w-100 py-3 mb-4" onclick="simulateSearch()"><i class="fa-solid fa-circle-notch fa-spin me-2 d-none" id="sim-spinner"></i> Analyze Nearby Compatible Donors</button>
+                        
+                        <div id="sim-results" class="d-none">
+                            <h6 class="text-secondary small mb-3">AI MATCH RESULTS (MOCK RADIUS: 10KM)</h6>
+                            <div class="d-flex flex-column gap-2" id="sim-list">
+                                <!-- Results populate here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Two Login Options Widget Grid -->
+    <section class="py-5 bg-secondary bg-opacity-25" id="login-options">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Seamless Role-Based Access</h2>
+                <p class="text-secondary">Select your entry point to access tailored dashboards with real-time operations</p>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-5">
+                    <div class="glass-card text-center p-5 hover-glow border-top border-danger border-4">
+                        <div class="feature-icon mx-auto"><i class="fa-solid fa-hand-holding-droplet"></i></div>
+                        <h3>Blood Donor Portal</h3>
+                        <p class="text-secondary mb-4">Toggle availability, track your donation history, earn heroic badges, and get notified about emergency requests in your immediate vicinity.</p>
+                        <a href="/auth?tab=login&role=donor" class="glow-btn text-decoration-none d-inline-block">Donor Log In <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="glass-card text-center p-5 hover-glow border-top border-primary border-4">
+                        <div class="feature-icon mx-auto text-info bg-info bg-opacity-10"><i class="fa-solid fa-hospital-user"></i></div>
+                        <h3>Patient & Hospital Portal</h3>
+                        <p class="text-secondary mb-4">Request blood, track active matches, visualize matching donors on interactive maps, and use AI forecasting to inspect future blood stocks.</p>
+                        <a href="/auth?tab=login&role=patient" class="outline-btn text-decoration-none d-inline-block">Patient Log In <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5" id="features">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Engineered For Emergency Response</h2>
+                <p class="text-secondary">Equipped with highly optimized machine learning models for split-second medical routing</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4 col-sm-6">
+                    <div class="glass-card h-100">
+                        <div class="feature-icon"><i class="fa-solid fa-microchip"></i></div>
+                        <h5>AI Donor Recommendation</h5>
+                        <p class="text-secondary small">Dynamic ranking scoring compatible donors based on distance decay, medical cooldown regulations, and speed indices.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="glass-card h-100">
+                        <div class="feature-icon text-success bg-success bg-opacity-10"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <h5>Availability Predictor</h5>
+                        <p class="text-secondary small">Logistic regression classifier predicting probability of donor response based on time, distance, and historical acceptance rates.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="glass-card h-100">
+                        <div class="feature-icon text-warning bg-warning bg-opacity-10"><i class="fa-solid fa-chart-line"></i></div>
+                        <h5>Stock Demand Forecasting</h5>
+                        <p class="text-secondary small">Ridge regression analytics predicting expected blood units demand for all eight blood groups over a rolling 7-day window.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="glass-card h-100">
+                        <div class="feature-icon text-info bg-info bg-opacity-10"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <h5>Severity Classification</h5>
+                        <p class="text-secondary small">Decision-tree classification calculating triage emergency priority levels (Critical, High, Medium, Low) based on active bleeding and hemoglobin level stats.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="glass-card h-100">
+                        <div class="feature-icon text-rose bg-rose bg-opacity-10"><i class="fa-solid fa-map-location-dot"></i></div>
+                        <h5>Interactive Map Search</h5>
+                        <p class="text-secondary small">Interactive mapping framework mapping matching donors in real-time radial boundaries with route optimization feedback.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="glass-card h-100">
+                        <div class="feature-icon text-primary bg-primary bg-opacity-10"><i class="fa-solid fa-award"></i></div>
+                        <h5>Gamified Donor Rewards</h5>
+                        <p class="text-secondary small">Exclusive digital certificates and badge rewards (Life Saver, Champion) to thank and encourage community blood donors.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Impact Statistics -->
+    <section class="py-5 bg-secondary bg-opacity-25" id="stats">
+        <div class="container">
+            <div class="glass-card py-5">
+                <div class="row text-center g-4">
+                    <div class="col-md-3 col-sm-6">
+                        <h1 class="display-5 fw-bold text-danger">5,432+</h1>
+                        <p class="text-secondary mb-0">Registered Noble Donors</p>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <h1 class="display-5 fw-bold text-primary">12,890+</h1>
+                        <p class="text-secondary mb-0">Emergency Requests Filled</p>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <h1 class="display-5 fw-bold text-success">150+</h1>
+                        <p class="text-secondary mb-0">Active Metro Hospitals</p>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <h1 class="display-5 fw-bold text-warning">48,900+</h1>
+                        <p class="text-secondary mb-0">Patient Lives Saved</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-5" id="how-it-works">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">How LifeLink Operates</h2>
+                <p class="text-secondary">Simplifying medical donor supply chain into a clean four-step workflow</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 fw-bold text-danger mb-2">01</div>
+                    <h5>Register Account</h5>
+                    <p class="text-secondary small">Sign up as a Patient or Donor. Fill out coordinates, phone contact, and blood group.</p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 fw-bold text-danger mb-2">02</div>
+                    <h5>Raise Alert</h5>
+                    <p class="text-secondary small">Patients publish active requests. AI classifies severity based on clinical data.</p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 fw-bold text-danger mb-2">03</div>
+                    <h5>AI Donor Dispatch</h5>
+                    <p class="text-secondary small">Algorithmic recommendation finds suitable compatible matches and signals local notifications.</p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 fw-bold text-danger mb-2">04</div>
+                    <h5>Complete Donation</h5>
+                    <p class="text-secondary small">Donation is logged, donors receive achievements, and active emergencies close.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-5 bg-secondary bg-opacity-50 border-top border-secondary">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <a class="navbar-brand d-flex align-items-center mb-3" href="/">
+                        <i class="fa-solid fa-droplet text-danger me-2 fs-4"></i>
+                        <span class="fs-5 fw-bold text-primary">Life<span class="text-danger">Link</span></span>
+                    </a>
+                    <p class="text-secondary small">
+                        Save Lives with AI-Powered Blood Connectivity. Securing the gap between donors, hospitals, and emergency units.
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-center">
+                    <h6 class="fw-bold mb-3">EMERGENCY HOTLINE (24/7)</h6>
+                    <h4 class="text-danger fw-bold"><i class="fa-solid fa-phone-volume me-2 animate-bounce"></i> 1-800-🩸-LIFELINK</h4>
+                    <p class="text-secondary small">Immediate dispatch for rare blood cases and trauma emergencies.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <h6 class="fw-bold mb-3">Quick Navigation</h6>
+                    <div class="d-flex flex-column gap-2 text-secondary small">
+                        <a href="/auth" class="text-decoration-none text-secondary">Sign In / Register</a>
+                        <a href="#features" class="text-decoration-none text-secondary">Features</a>
+                        <a href="#stats" class="text-decoration-none text-secondary">Impact Stats</a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4 border-secondary">
+            <div class="d-flex flex-wrap justify-content-between align-items-center small text-secondary">
+                <p class="mb-0">© 2026 LifeLink Technologies Inc. All rights reserved.</p>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-secondary"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" class="text-secondary"><i class="fa-brands fa-linkedin"></i></a>
+                    <a href="#" class="text-secondary"><i class="fa-brands fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot Assistant Widget Floating Button & Drawer -->
+    <div class="chatbot-bubble">
+        <div class="chat-toggle" onclick="toggleChat()">
+            <i class="fa-solid fa-robot"></i>
+        </div>
+    </div>
+    
+    <div class="chat-container glass-card p-0" id="chat-container">
+        <div class="chat-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-robot"></i>
+                <div>
+                    <h6 class="mb-0 fw-bold">LifeLink AI Assistant</h6>
+                    <span class="small opacity-75" style="font-size: 0.75rem;">Online • Eligibility Expert</span>
+                </div>
+            </div>
+            <button class="btn btn-link text-white p-0 border-0" onclick="toggleChat()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="chat-msg bot">
+                Hello! I am your <b>LifeLink AI Advisor</b>. Ask me anything about donation guidelines, blood group compatibility, or how the platform operates!
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="handleChatKey(event)">
+            <button class="btn glow-btn py-2 px-3 border-0 rounded-2" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Theme and Chatbot Core Actions Script -->
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = document.getElementById('theme-icon');
+            if(document.body.classList.contains('light-mode')) {
+                icon.className = "fa-solid fa-moon";
+            } else {
+                icon.className = "fa-solid fa-sun";
+            }
+        }
+
+        // Chat Toggle
+        function toggleChat() {
+            const container = document.getElementById('chat-container');
+            container.style.display = container.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function handleChatKey(e) {
+            if(e.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const query = input.value.trim();
+            if(!query) return;
+
+            // Append user message
+            appendMessage(query, 'user');
+            input.value = "";
+
+            // Call Chatbot API
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: query })
+            })
+            .then(res => res.json())
+            .then(data => {
+                appendMessage(data.reply, 'bot');
+            })
+            .catch(() => {
+                appendMessage("Sorry, I am having trouble connecting to the LifeLink AI engine. Please try again.", 'bot');
+            });
+        }
+
+        function appendMessage(text, sender) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const msg = document.createElement('div');
+            msg.className = `chat-msg ${sender}`;
+            msg.innerHTML = text;
+            messagesDiv.appendChild(msg);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Search Simulator on Landing Page
+        function simulateSearch() {
+            const bg = document.getElementById('sim-blood-group').value;
+            const spinner = document.getElementById('sim-spinner');
+            const results = document.getElementById('sim-results');
+            const list = document.getElementById('sim-list');
+
+            spinner.classList.remove('d-none');
+            results.classList.add('d-none');
+            list.innerHTML = "";
+
+            setTimeout(() => {
+                spinner.classList.add('d-none');
+                results.classList.remove('d-none');
+
+                const mockDonors = {
+                    'O-': [
+                        { name: 'Jane Smith', distance: '1.2 km', match: '95.8%', prob: '96.2%', available: true },
+                        { name: 'Bob Brown', distance: '2.5 km', match: '88.0%', prob: '78.5%', available: false }
+                    ],
+                    'A+': [
+                        { name: 'John Doe', distance: '0.8 km', match: '92.5%', prob: '94.1%', available: true },
+                        { name: 'Sarah Connor', distance: '3.4 km', match: '70.0%', prob: '85.0%', available: true }
+                    ],
+                    'B+': [
+                        { name: 'Alice Johnson', distance: '1.9 km', match: '78.4%', prob: '82.0%', available: true },
+                        { name: 'Emily Davis', distance: '4.8 km', match: '72.0%', prob: '89.1%', available: true }
+                    ],
+                    'AB+': [
+                        { name: 'Bob Brown', distance: '2.5 km', match: '88.0%', prob: '78.5%', available: false },
+                        { name: 'John Doe', distance: '0.8 km', match: '84.0%', prob: '94.1%', available: true },
+                        { name: 'Alice Johnson', distance: '1.9 km', match: '76.0%', prob: '82.0%', available: true }
+                    ]
+                };
+
+                const matches = mockDonors[bg] || [
+                    { name: 'Jane Smith', distance: '1.2 km', match: '85%', prob: '90%', available: true }
+                ];
+
+                matches.forEach(m => {
+                    const row = document.createElement('div');
+                    row.className = "d-flex align-items-center justify-content-between p-3 rounded-3 mb-2";
+                    row.style.background = "rgba(255,255,255,0.03)";
+                    row.style.border = "1px solid rgba(255,255,255,0.05)";
+                    row.innerHTML = `
+                        <div>
+                            <div class="fw-bold">${m.name} <span class="badge ${m.available ? 'bg-success' : 'bg-secondary'} small ms-1" style="font-size: 0.65rem;">${m.available ? 'Available' : 'Busy'}</span></div>
+                            <span class="small text-secondary"><i class="fa-solid fa-map-pin me-1 text-danger"></i> Distance: ${m.distance}</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-success small fw-bold">Match: ${m.match}</div>
+                            <span class="small text-secondary" style="font-size: 0.75rem;">Response Prob: ${m.prob}</span>
+                        </div>
+                    `;
+                    list.appendChild(row);
+                });
+            }, 800);
+        }
+    </script>
+</body>
+</html>

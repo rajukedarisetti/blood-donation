@@ -1,0 +1,23 @@
+# Python Caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pkl
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Database & Credentials
+backend/lifelink.db
+instance/
+.webassets-cache
+
+# System & OS Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

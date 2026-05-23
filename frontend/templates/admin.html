@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard – LifeLink</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js for beautiful analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Style Sheet -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-primary">
+
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <a class="d-flex align-items-center text-decoration-none" href="/">
+                    <i class="fa-solid fa-droplet text-danger me-2 fs-4"></i>
+                    <span class="fs-5 fw-bold text-white">Life<span class="text-danger">Link</span></span>
+                </a>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link active" onclick="switchSection('overview')">
+                        <i class="fa-solid fa-chart-pie"></i> System Analytics
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="switchSection('requests')">
+                        <i class="fa-solid fa-truck-medical"></i> Manage Requests
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="switchSection('log-donation')">
+                        <i class="fa-solid fa-circle-plus"></i> Record Donation
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="toggleTheme()">
+                        <i class="fa-solid fa-circle-half-stroke"></i> Toggle Theme
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="#" class="sidebar-link text-danger border border-danger border-opacity-10" onclick="handleLogout()">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <!-- Header navbar -->
+            <header class="main-navbar">
+                <div>
+                    <h5 class="mb-0 text-white fw-bold">LifeLink Global Admin Center</h5>
+                    <span class="small text-secondary">Control Panel • Operations Monitor</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-user-shield text-danger fs-4"></i>
+                        <span class="text-white small fw-bold">Administrator</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alerts Banner -->
+            <div class="alert alert-danger d-none" id="admin-error"></div>
+            <div class="alert alert-success d-none" id="admin-success"></div>
+
+            <!-- SECTION 1: SYSTEM ANALYTICS & OVERVIEW -->
+            <section id="section-overview">
+                <!-- Stats widgets -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="glass-card stat-widget">
+                            <div>
+                                <h6 class="text-secondary small">REGISTERED USERS</h6>
+                                <h3 class="text-white fw-bold mb-0 mt-2" id="stat-users">0</h3>
+                                <span class="small text-secondary mt-1 d-inline-block">Total platform accounts</span>
+                            </div>
+                            <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="glass-card stat-widget">
+                            <div>
+                                <h6 class="text-secondary small">ACTIVE DONORS</h6>
+                                <h3 class="text-white fw-bold mb-0 mt-2" id="stat-donors">0</h3>
+                                <span class="small text-danger mt-1 d-inline-block"><i class="fa-solid fa-droplet animate-pulse"></i> Blood donors</span>
+                            </div>
+                            <div class="stat-icon red"><i class="fa-solid fa-hand-holding-droplet"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="glass-card stat-widget">
+                            <div>
+                                <h6 class="text-secondary small">COMPLETED DONATIONS</h6>
+                                <h3 class="text-white fw-bold mb-0 mt-2" id="stat-donations">0</h3>
+                                <span class="small text-success mt-1 d-inline-block"><i class="fa-solid fa-award"></i> Certificates dispatched</span>
+                            </div>
+                            <div class="stat-icon green"><i class="fa-solid fa-ribbon"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="glass-card stat-widget">
+                            <div>
+                                <h6 class="text-secondary small">ACTIVE EMERGENCIES</h6>
+                                <h3 class="text-white fw-bold mb-0 mt-2" id="stat-emergencies">0</h3>
+                                <span class="small text-warning mt-1 d-inline-block" id="stat-critical-desc">0 critical level</span>
+                            </div>
+                            <div class="stat-icon orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <!-- AI Blood Demand Forecast Graph -->
+                    <div class="col-lg-8">
+                        <div class="glass-card">
+                            <h5 class="text-white mb-3"><i class="fa-solid fa-chart-line text-danger me-2"></i> AI Blood Stock Demand Forecasting (7-Day Projection)</h5>
+                            <p class="text-secondary small">Compares historical average demand counts against current Ridge Regression forecasts using seasonal and critical epidemic indicators.</p>
+                            <div style="height: 320px; position: relative;">
+                                <canvas id="demandChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fraud & Security alerts -->
+                    <div class="col-lg-4">
+                        <div class="glass-card h-100 border border-danger border-opacity-10">
+                            <h5 class="text-white mb-3 text-danger"><i class="fa-solid fa-shield-halved me-2"></i> Anti-Spam / Fraud Alerts</h5>
+                            <p class="text-secondary small mb-4">Scans patient activity and flags overlapping high-priority requests within a 2-hour window.</p>
+                            <div id="fraud-alerts-container" class="d-flex flex-column gap-3">
+                                <!-- Populated dynamically by JS -->
+                                <div class="text-center text-success py-4">
+                                    <i class="fa-solid fa-circle-check fs-2 mb-2 d-block"></i>
+                                    <span class="small fw-bold">Security system nominal. No suspicious activities flagged.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: MANAGE REQUESTS -->
+            <section id="section-requests" class="d-none">
+                <div class="glass-card">
+                    <h5 class="text-white mb-4"><i class="fa-solid fa-truck-medical text-danger me-2"></i> Active Emergency Blood Requests</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-borderless align-middle small">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <th>REQUEST ID</th>
+                                    <th>PATIENT</th>
+                                    <th>BLOOD GROUP</th>
+                                    <th>UNITS</th>
+                                    <th>HOSPITAL</th>
+                                    <th>AI PRIORITY</th>
+                                    <th>STATUS</th>
+                                    <th>ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-requests-list">
+                                <tr>
+                                    <td colspan="8" class="text-center text-secondary py-4">No active requests.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: RECORD DONATION -->
+            <section id="section-log-donation" class="d-none">
+                <div class="row g-4 justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="glass-card p-5">
+                            <h4 class="text-white mb-3 glow-text"><i class="fa-solid fa-circle-plus text-success me-2"></i> Record Completed Donation</h4>
+                            <p class="text-secondary small mb-4">Input completed whole blood donation metrics. Completing records increments donor totals, updates AI match scores, fulfills active requests, and issues a shareable PDF digital certificate.</p>
+                            <form id="record-donation-form" onsubmit="submitDonationRecord(event)">
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary small">DONOR ID</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-user"></i></span>
+                                        <input type="number" class="form-control bg-dark border-secondary text-white py-2.5 rounded-end-3" id="log-donor-id" placeholder="e.g. 1" required>
+                                    </div>
+                                    <span class="small text-muted mt-1 d-inline-block">The unique ID assigned to the donor profile (e.g. 1).</span>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary small">LINKED EMERGENCY REQUEST ID (OPTIONAL)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-hashtag"></i></span>
+                                        <input type="number" class="form-control bg-dark border-secondary text-white py-2.5 rounded-end-3" id="log-request-id" placeholder="e.g. 2">
+                                    </div>
+                                    <span class="small text-muted mt-1 d-inline-block">Leave blank if walk-in or general blood bank stock donation.</span>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label text-secondary small">UNITS OF BLOOD LOGGED</label>
+                                    <input type="number" class="form-control bg-dark border-secondary text-white py-2.5 rounded-3" id="log-units" min="1" max="5" value="1" required>
+                                </div>
+
+                                <button type="submit" class="glow-btn w-100 py-3 rounded-3 mt-2"><i class="fa-solid fa-certificate me-2"></i> Record Completion & Dispatch Certificate</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Bootstrap 5 Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core Admin Dashboard Scripts -->
+    <script>
+        const user = JSON.parse(localStorage.getItem('lifelink_user'));
+        const token = localStorage.getItem('lifelink_token');
+        let demandChartInstance = null;
+
+        if (!token || user.role !== 'admin') {
+            window.location.href = '/auth';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAdminStats();
+        });
+
+        function switchSection(secId) {
+            document.getElementById('section-overview').classList.add('d-none');
+            document.getElementById('section-requests').classList.add('d-none');
+            document.getElementById('section-log-donation').classList.add('d-none');
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+
+            if (secId === 'overview') {
+                document.getElementById('section-overview').classList.remove('d-none');
+                event.target.classList.add('active');
+                loadAdminStats();
+            } else if (secId === 'requests') {
+                document.getElementById('section-requests').classList.remove('d-none');
+                event.target.classList.add('active');
+                loadAdminStats(); // refreshes list
+            } else if (secId === 'log-donation') {
+                document.getElementById('section-log-donation').classList.remove('d-none');
+                event.target.classList.add('active');
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Fetch Global Stats, Forecasting & Warnings
+        function loadAdminStats() {
+            fetch('/api/admin/dashboard', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Update widgets
+                document.getElementById('stat-users').innerText = data.stats.total_users;
+                document.getElementById('stat-donors').innerText = data.stats.total_donors;
+                document.getElementById('stat-donations').innerText = data.stats.completed_donations;
+                document.getElementById('stat-emergencies').innerText = data.stats.active_requests;
+                document.getElementById('stat-critical-desc').innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${data.stats.critical_requests} critical severity`;
+
+                // Render Chart.js
+                renderDemandForecastChart(data.demand_forecast);
+
+                // Render Fraud alerts
+                renderFraudAlerts(data.fraud_alerts);
+
+                // Populate Emergency requests table
+                populateRequestsTable(data.emergency_list);
+            });
+        }
+
+        // Render Forecasting analytics
+        function renderDemandForecastChart(forecastData) {
+            const labels = Object.keys(forecastData);
+            const historical = labels.map(l => forecastData[l].historical_count);
+            const forecasted = labels.map(l => forecastData[l].forecasted_units_needed);
+
+            const ctx = document.getElementById('demandChart').getContext('2d');
+            
+            if (demandChartInstance) {
+                demandChartInstance.destroy();
+            }
+
+            demandChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Current Rolling Requests',
+                            data: historical,
+                            backgroundColor: 'rgba(59, 130, 246, 0.4)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1.5,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'AI-Forecasted Stock Demand (7 Days)',
+                            data: forecasted,
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 1.5,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#9ca3af' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f3f4f6', font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render Security alerts
+        function renderFraudAlerts(alerts) {
+            const container = document.getElementById('fraud-alerts-container');
+            container.innerHTML = "";
+
+            if(alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-success py-4">
+                        <i class="fa-solid fa-circle-check fs-2 mb-2 d-block"></i>
+                        <span class="small fw-bold">Security system nominal. No suspicious activities flagged.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            alerts.forEach(a => {
+                const div = document.createElement('div');
+                div.className = "p-3 rounded-3 border border-danger bg-danger bg-opacity-10 small";
+                div.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-danger text-white fw-bold">SUSPICIOUS VELOCITY</span>
+                        <span class="text-muted small">Just now</span>
+                    </div>
+                    <p class="mb-1 text-white"><b>${a.name}</b> (${a.email}) has raised <b>${a.request_count}</b> overlapping emergency requests within the last 2 hours.</p>
+                    <span class="text-secondary small d-block">Contact: ${a.phone}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Populate requests lists
+        function populateRequestsTable(requests) {
+            const tbody = document.getElementById('admin-requests-list');
+            tbody.innerHTML = "";
+
+            if(requests.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-secondary py-4">No active requests logged.</td></tr>`;
+                return;
+            }
+
+            requests.forEach(r => {
+                const priorityClass = r.priority === 'Critical' ? 'bg-danger text-white glow-text' : (r.priority === 'High' ? 'bg-warning text-dark' : 'bg-secondary text-white');
+                const statusClass = r.status === 'Fulfilled' ? 'text-success fw-bold' : (r.status === 'Matching' ? 'text-info fw-bold' : 'text-warning');
+
+                const row = document.createElement('tr');
+                row.style.borderBottom = "1px solid var(--border-color)";
+                row.innerHTML = `
+                    <td>#LL-${r.id}</td>
+                    <td class="fw-bold">${r.patient_name}</td>
+                    <td><span class="badge bg-danger">${r.blood_group}</span></td>
+                    <td>${r.units_needed} Unit(s)</td>
+                    <td>${r.hospital_name}</td>
+                    <td><span class="badge ${priorityClass}">${r.priority}</span></td>
+                    <td class="${statusClass}">${r.status}</td>
+                    <td>
+                        <button class="btn btn-outline-success btn-sm rounded-pill px-3 py-1" style="font-size:0.75rem;" onclick="prefillDonationLog(${r.id})">
+                            <i class="fa-solid fa-circle-check me-1"></i> Fulfill Donation
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Prefills donation log form
+        function prefillDonationLog(reqId) {
+            switchSection('log-donation');
+            document.getElementById('log-request-id').value = reqId;
+        }
+
+        // Submit Donation Completion Record
+        function submitDonationRecord(e) {
+            e.preventDefault();
+            hideMessages();
+
+            const donorId = parseInt(document.getElementById('log-donor-id').value);
+            const reqIdVal = document.getElementById('log-request-id').value;
+            const reqId = reqIdVal ? parseInt(reqIdVal) : null;
+            const units = parseInt(document.getElementById('log-units').value);
+
+            const errorDiv = document.getElementById('admin-error');
+            const successDiv = document.getElementById('admin-success');
+
+            fetch('/api/donations/complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ donor_id: donorId, request_id: reqId, units })
+            })
+            .then(res => {
+                if(!res.ok) return res.json().then(d => { throw new Error(d.message) });
+                return res.json();
+            })
+            .then(data => {
+                let msg = `<i class="fa-solid fa-circle-check me-2"></i> ${data.message} Cert Code issued: <b>${data.certificate_code}</b>.`;
+                if(data.badge_unlocked) {
+                    msg += ` <i class="fa-solid fa-trophy text-warning ms-1"></i> Special Badge Unlocked: <b>${data.badge_unlocked}</b>!`;
+                }
+
+                successDiv.innerHTML = msg;
+                successDiv.classList.remove('d-none');
+                
+                // Reset form
+                document.getElementById('record-donation-form').reset();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Switch back after delay
+                setTimeout(() => {
+                    switchSection('overview');
+                }, 2000);
+            })
+            .catch(err => {
+                errorDiv.innerHTML = err.message;
+                errorDiv.classList.remove('d-none');
+            });
+        }
+
+        function hideMessages() {
+            document.getElementById('admin-error').classList.add('d-none');
+            document.getElementById('admin-success').classList.add('d-none');
+        }
+    </script>
+</body>
+</html>

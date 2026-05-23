@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard – LifeLink</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <!-- Leaflet.js Interactive Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Custom Style Sheet -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-primary">
+
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <a class="d-flex align-items-center text-decoration-none" href="/">
+                    <i class="fa-solid fa-droplet text-danger me-2 fs-4"></i>
+                    <span class="fs-5 fw-bold text-white">Life<span class="text-danger">Link</span></span>
+                </a>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link active" onclick="switchSection('find-donors')">
+                        <i class="fa-solid fa-magnifying-glass-location"></i> Find Donors
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="switchSection('my-requests')">
+                        <i class="fa-solid fa-truck-medical"></i> Emergency Requests
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="toggleTheme()">
+                        <i class="fa-solid fa-circle-half-stroke"></i> Toggle Theme
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="#" class="sidebar-link text-danger border border-danger border-opacity-10" onclick="handleLogout()">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <!-- Header navbar -->
+            <header class="main-navbar">
+                <div>
+                    <h5 class="mb-0 text-white fw-bold">LifeLink Patient Hub</h5>
+                    <span class="small text-secondary" id="welcome-text">Loading user...</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notifications button -->
+                    <button class="btn btn-outline-secondary border-0 p-2 position-relative text-white" onclick="toggleNotificationsModal()">
+                        <i class="fa-regular fa-bell fs-5"></i>
+                        <span class="notify-badge d-none" id="notif-badge"></span>
+                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-hospital-user text-info fs-4"></i>
+                        <span class="text-white small fw-bold" id="header-user-name">Patient</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alerts Banner -->
+            <div class="alert alert-danger d-none" id="patient-error"></div>
+            <div class="alert alert-success d-none" id="patient-success"></div>
+
+            <!-- SECTION 1: FIND DONORS -->
+            <section id="section-find-donors">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="glass-card mb-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="mb-0 text-white"><i class="fa-solid fa-map-location-dot text-danger me-2"></i> Live Donor Interactive Map</h5>
+                                <span class="small text-secondary">Click map to pin hospital location coordinates</span>
+                            </div>
+                            <div id="map"></div>
+                        </div>
+
+                        <!-- Matching Results -->
+                        <div class="glass-card">
+                            <h5 class="text-white mb-3"><i class="fa-solid fa-ranking-stars text-danger me-2"></i> AI-Ranked Compatible Donors</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover table-borderless align-middle small">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid var(--border-color);">
+                                            <th>DONOR NAME</th>
+                                            <th>GROUP</th>
+                                            <th>DISTANCE</th>
+                                            <th>AI MATCH SCORE</th>
+                                            <th>RESP. PROBABILITY</th>
+                                            <th>CONTACT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="donors-list">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-secondary py-4">Click "Search Nearby Donors" below to analyze.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Emergency Request Form -->
+                        <div class="glass-card h-100">
+                            <h4 class="text-white mb-4 glow-text"><i class="fa-solid fa-kit-medical text-danger me-2"></i> Request Blood</h4>
+                            <form id="emergency-request-form" onsubmit="submitEmergencyRequest(event)">
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary small">BLOOD GROUP NEEDED</label>
+                                    <select class="form-select bg-dark border-secondary text-white rounded-3 py-2.5" id="req-blood-group" required onchange="triggerDonorSearch()">
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label text-secondary small">UNITS REQUIRED</label>
+                                        <input type="number" class="form-control bg-dark border-secondary text-white rounded-3 py-2.5" id="req-units" min="1" max="10" value="1" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-secondary small">PATIENT AGE</label>
+                                        <input type="number" class="form-control bg-dark border-secondary text-white rounded-3 py-2.5" id="req-age" min="1" max="100" value="35" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary small">HOSPITAL NAME</label>
+                                    <input type="text" class="form-control bg-dark border-secondary text-white rounded-3 py-2.5" id="req-hospital" placeholder="St. Marys Emergency Care" required>
+                                </div>
+                                
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label text-secondary small">LATITUDE</label>
+                                        <input type="number" step="any" class="form-control bg-dark border-secondary text-white rounded-3 small py-2.5" id="req-lat" value="12.9716" required readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-secondary small">LONGITUDE</label>
+                                        <input type="number" step="any" class="form-control bg-dark border-secondary text-white rounded-3 small py-2.5" id="req-lng" value="77.5946" required readonly>
+                                    </div>
+                                </div>
+
+                                <!-- AI PRIORITY CLASSIFIER PARAMETERS -->
+                                <hr class="border-secondary my-3">
+                                <h6 class="text-danger small mb-3"><i class="fa-solid fa-dna me-2"></i> AI Clinical Indicators (For Priority Rating)</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary small d-flex justify-content-between">HEMOGLOBIN LEVEL (g/dL) <span id="val-hemo" class="text-white">12.0</span></label>
+                                    <input type="range" class="form-range text-danger" id="req-hemoglobin" min="4.0" max="15.0" step="0.1" value="12.0" oninput="document.getElementById('val-hemo').innerText = this.value">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="req-bleeding">
+                                        <label class="form-check-input-label text-white small" for="req-bleeding">Active/Severe Bleeding</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="req-trauma">
+                                        <label class="form-check-input-label text-white small" for="req-trauma">Accident or Trauma Incident</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="req-surgery">
+                                        <label class="form-check-input-label text-white small" for="req-surgery">Surgery Scheduled Immediately</label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary small">ADDITIONAL CASE DETAILS</label>
+                                    <textarea class="form-control bg-dark border-secondary text-white rounded-3" id="req-details" rows="2" placeholder="Provide extra hospital details..."></textarea>
+                                </div>
+
+                                <button type="submit" class="glow-btn w-100 py-3 rounded-3 mt-2"><i class="fa-solid fa-circle-plus me-2"></i> Launch Emergency Request</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: MY EMERGENCY REQUESTS -->
+            <section id="section-my-requests" class="d-none">
+                <div class="glass-card">
+                    <h5 class="text-white mb-4"><i class="fa-solid fa-clock-rotate-left text-danger me-2"></i> Your Emergency Blood Requests</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-borderless align-middle small">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <th>REQUEST ID</th>
+                                    <th>BLOOD GROUP</th>
+                                    <th>UNITS NEEDED</th>
+                                    <th>HOSPITAL</th>
+                                    <th>AI PRIORITY</th>
+                                    <th>STATUS</th>
+                                    <th>DATE CREATED</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my-requests-list">
+                                <tr>
+                                    <td colspan="7" class="text-center text-secondary py-4">No requests submitted yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal fade" id="notif-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card p-0">
+                <div class="modal-header border-bottom border-secondary p-3">
+                    <h5 class="modal-title text-white"><i class="fa-regular fa-bell text-danger me-2"></i> Dashboard Notifications</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3" id="notif-list" style="max-height: 350px; overflow-y: auto;">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="modal-footer border-top border-secondary p-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="markAllNotificationsRead()">Mark All Read</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Bootstrap 5 Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core Patient Dashboard Scripts -->
+    <script>
+        let map, marker;
+        const user = JSON.parse(localStorage.getItem('lifelink_user'));
+        const token = localStorage.getItem('lifelink_token');
+
+        if (!token || user.role !== 'patient') {
+            window.location.href = '/auth';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('header-user-name').innerText = user.name;
+            document.getElementById('welcome-text').innerText = `Role: Patient | Hosp: ${user.name}`;
+
+            initDashboardMap();
+            loadMyRequests();
+            loadNotifications();
+            triggerDonorSearch();
+            
+            // Check for notifications periodically
+            setInterval(loadNotifications, 10000);
+        });
+
+        function switchSection(secId) {
+            document.getElementById('section-find-donors').classList.add('d-none');
+            document.getElementById('section-my-requests').classList.add('d-none');
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+
+            if (secId === 'find-donors') {
+                document.getElementById('section-find-donors').classList.remove('d-none');
+                event.target.classList.add('active');
+                setTimeout(() => map.invalidateSize(), 200); // redraw map safely
+            } else if (secId === 'my-requests') {
+                document.getElementById('section-my-requests').classList.remove('d-none');
+                event.target.classList.add('active');
+                loadMyRequests();
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Initialize Map
+        function initDashboardMap() {
+            // Default center around user's seeded hospital location (or center city)
+            const baseLat = 12.9716;
+            const baseLng = 77.5946;
+
+            map = L.map('map').setView([baseLat, baseLng], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // User's default hospital marker
+            marker = L.marker([baseLat, baseLng], { draggable: true }).addTo(map)
+                .bindPopup("<b>Emergency Location</b><br>Drag pin to change hospital position.")
+                .openPopup();
+
+            marker.on('dragend', function (e) {
+                const position = marker.getLatLng();
+                document.getElementById('req-lat').value = position.lat.toFixed(5);
+                document.getElementById('req-lng').value = position.lng.toFixed(5);
+                triggerDonorSearch();
+            });
+
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                document.getElementById('req-lat').value = e.latlng.lat.toFixed(5);
+                document.getElementById('req-lng').value = e.latlng.lng.toFixed(5);
+                triggerDonorSearch();
+            });
+        }
+
+        let donorMarkersLayer = L.layerGroup();
+        
+        // Search Matching Donors
+        function triggerDonorSearch() {
+            const bg = document.getElementById('req-blood-group').value;
+            const lat = document.getElementById('req-lat').value;
+            const lng = document.getElementById('req-lng').value;
+
+            if(!map) return;
+
+            fetch('/api/donors/search', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ blood_group: bg, latitude: parseFloat(lat), longitude: parseFloat(lng) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('donors-list');
+                list.innerHTML = "";
+                
+                // Clear old donor markers
+                donorMarkersLayer.clearLayers();
+
+                if (data.length === 0) {
+                    list.innerHTML = `<tr><td colspan="6" class="text-center text-secondary py-3">No compatible available donors inside search radius.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(d => {
+                    // Update table
+                    const badgeClass = d.ai_suitability_score >= 85 ? 'bg-success' : (d.ai_suitability_score >= 65 ? 'bg-info' : 'bg-warning');
+                    
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = "1px solid var(--border-color)";
+                    row.innerHTML = `
+                        <td class="fw-bold">${d.name}</td>
+                        <td><span class="badge bg-danger">${d.blood_group}</span></td>
+                        <td class="text-secondary">${d.distance_km} km</td>
+                        <td><span class="badge ${badgeClass}">${d.ai_suitability_score} / 100</span></td>
+                        <td class="text-secondary">${d.ai_response_probability}%</td>
+                        <td class="text-danger fw-semibold">${d.phone}</td>
+                    `;
+                    list.appendChild(row);
+
+                    // Add marker to map
+                    const greenIcon = new L.Icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    });
+
+                    const dMarker = L.marker([d.lat, d.lng], { icon: greenIcon })
+                        .bindPopup(`<b>${d.name} (${d.blood_group})</b><br>AI Match Score: ${d.ai_suitability_score}%<br>Distance: ${d.distance_km}km`)
+                        .addTo(donorMarkersLayer);
+                });
+
+                donorMarkersLayer.addTo(map);
+            })
+            .catch(err => console.error("Error searching donors: ", err));
+        }
+
+        // Raise Emergency Request
+        function submitEmergencyRequest(e) {
+            e.preventDefault();
+            hideMessages();
+
+            const bg = document.getElementById('req-blood-group').value;
+            const units = parseInt(document.getElementById('req-units').value);
+            const hospital = document.getElementById('req-hospital').value;
+            const lat = parseFloat(document.getElementById('req-lat').value);
+            const lng = parseFloat(document.getElementById('req-lng').value);
+            const age = parseInt(document.getElementById('req-age').value);
+            const hemoglobin = parseFloat(document.getElementById('req-hemoglobin').value);
+            const details = document.getElementById('req-details').value;
+
+            const bleeding = document.getElementById('req-bleeding').checked ? 1 : 0;
+            const trauma = document.getElementById('req-trauma').checked ? 1 : 0;
+            const surgery = document.getElementById('req-surgery').checked ? 1 : 0;
+
+            const errorDiv = document.getElementById('patient-error');
+            const successDiv = document.getElementById('patient-success');
+
+            fetch('/api/requests/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    blood_group: bg, units_needed: units, hospital_name: hospital,
+                    latitude: lat, longitude: lng, patient_age: age,
+                    hemoglobin_level: hemoglobin, active_bleeding: bleeding,
+                    trauma_or_accident: trauma, surgery_scheduled: surgery, details
+                })
+            })
+            .then(res => {
+                if(!res.ok) return res.json().then(d => { throw new Error(d.message) });
+                return res.json();
+            })
+            .then(data => {
+                successDiv.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> ${data.message} Priority level classified by AI: <b>${data.ai_priority}</b>. Alerts broadcasted!`;
+                successDiv.classList.remove('d-none');
+                
+                // Reset form
+                document.getElementById('emergency-request-form').reset();
+                document.getElementById('val-hemo').innerText = "12.0";
+                
+                // Refresh listings
+                loadMyRequests();
+                loadNotifications();
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch(err => {
+                errorDiv.innerHTML = err.message;
+                errorDiv.classList.remove('d-none');
+            });
+        }
+
+        function loadMyRequests() {
+            fetch('/api/requests/my-requests', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('my-requests-list');
+                list.innerHTML = "";
+
+                if(data.length === 0) {
+                    list.innerHTML = `<tr><td colspan="7" class="text-center text-secondary py-3">No blood requests raised yet.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(r => {
+                    const priorityClass = r.priority === 'Critical' ? 'bg-danger text-white glow-text' : (r.priority === 'High' ? 'bg-warning text-dark' : 'bg-secondary text-white');
+                    const statusClass = r.status === 'Fulfilled' ? 'text-success fw-bold' : (r.status === 'Matching' ? 'text-info fw-bold' : 'text-warning');
+                    
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = "1px solid var(--border-color)";
+                    row.innerHTML = `
+                        <td>#LL-${r.id}</td>
+                        <td><span class="badge bg-danger">${r.blood_group}</span></td>
+                        <td>${r.units_needed} Unit(s)</td>
+                        <td>${r.hospital_name}</td>
+                        <td><span class="badge ${priorityClass}">${r.priority}</span></td>
+                        <td class="${statusClass}">${r.status}</td>
+                        <td class="text-secondary">${r.created_at}</td>
+                    `;
+                    list.appendChild(row);
+                });
+            });
+        }
+
+        // Notification helpers
+        let notifModal;
+        function toggleNotificationsModal() {
+            if(!notifModal) {
+                notifModal = new bootstrap.Modal(document.getElementById('notif-modal'));
+            }
+            notifModal.show();
+        }
+
+        function loadNotifications() {
+            fetch('/api/notifications', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('notif-list');
+                const badge = document.getElementById('notif-badge');
+                list.innerHTML = "";
+
+                let unreadCount = 0;
+                data.forEach(n => {
+                    if(!n.is_read) unreadCount++;
+
+                    const div = document.createElement('div');
+                    div.className = "p-2 rounded-3 mb-2 small";
+                    div.style.background = n.is_read ? "rgba(255,255,255,0.01)" : "rgba(239, 68, 68, 0.08)";
+                    div.style.border = "1px solid " + (n.is_read ? "rgba(255,255,255,0.03)" : "rgba(239, 68, 68, 0.15)");
+                    div.innerHTML = `
+                        <div class="d-flex justify-content-between mb-1">
+                            <b class="text-white">${n.title}</b>
+                            <span class="text-muted small">${n.created_at.split(' ')[1] || ''}</span>
+                        </div>
+                        <p class="mb-0 text-secondary" style="font-size:0.8rem;">${n.message}</p>
+                    `;
+                    list.appendChild(div);
+                });
+
+                if(unreadCount > 0) {
+                    badge.classList.remove('d-none');
+                } else {
+                    badge.classList.add('d-none');
+                }
+
+                if(data.length === 0) {
+                    list.innerHTML = `<p class="text-center text-secondary small py-4 mb-0">No notifications yet.</p>`;
+                }
+            });
+        }
+
+        function markAllNotificationsRead() {
+            fetch('/api/notifications/read', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(() => {
+                loadNotifications();
+                if(notifModal) notifModal.hide();
+            });
+        }
+
+        function hideMessages() {
+            document.getElementById('patient-error').classList.add('d-none');
+            document.getElementById('patient-success').classList.add('d-none');
+        }
+    </script>
+</body>
+</html>

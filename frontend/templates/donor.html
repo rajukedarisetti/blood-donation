@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard – LifeLink</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <!-- Custom Style Sheet -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-primary">
+
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <a class="d-flex align-items-center text-decoration-none" href="/">
+                    <i class="fa-solid fa-droplet text-danger me-2 fs-4"></i>
+                    <span class="fs-5 fw-bold text-white">Life<span class="text-danger">Link</span></span>
+                </a>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link active" onclick="switchSection('overview')">
+                        <i class="fa-solid fa-gauge-high"></i> Overview
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="switchSection('history')">
+                        <i class="fa-solid fa-circle-check"></i> Donation History
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="toggleTheme()">
+                        <i class="fa-solid fa-circle-half-stroke"></i> Toggle Theme
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="#" class="sidebar-link text-danger border border-danger border-opacity-10" onclick="handleLogout()">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <!-- Header navbar -->
+            <header class="main-navbar">
+                <div>
+                    <h5 class="mb-0 text-white fw-bold">LifeLink Donor Hub</h5>
+                    <span class="small text-secondary" id="welcome-text">Loading profile...</span>
+                </div>
+                <div class="d-flex align-items-center gap-4">
+                    <!-- Availability toggle -->
+                    <div class="d-flex align-items-center gap-2 bg-dark bg-opacity-25 px-3 py-1.5 rounded-3 border border-secondary">
+                        <span class="small text-secondary fw-semibold">Active Status:</span>
+                        <label class="switch">
+                            <input type="checkbox" id="availability-toggle" onchange="toggleDonorAvailability()">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="small text-success fw-bold ms-1" id="availability-label">Available</span>
+                    </div>
+
+                    <!-- Notification bell -->
+                    <button class="btn btn-outline-secondary border-0 p-2 position-relative text-white" onclick="toggleNotificationsModal()">
+                        <i class="fa-regular fa-bell fs-5"></i>
+                        <span class="notify-badge d-none" id="notif-badge"></span>
+                    </button>
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-hand-holding-droplet text-danger fs-4"></i>
+                        <span class="text-white small fw-bold" id="header-user-name">Donor</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alerts Banner -->
+            <div class="alert alert-danger d-none" id="donor-error"></div>
+            <div class="alert alert-success d-none" id="donor-success"></div>
+
+            <!-- SECTION 1: OVERVIEW -->
+            <section id="section-overview">
+                <div class="row g-4 mb-4">
+                    <!-- AI Score Card -->
+                    <div class="col-md-3">
+                        <div class="glass-card text-center h-100 py-4 d-flex flex-column justify-content-center">
+                            <h6 class="text-secondary small mb-3">AI DONOR SCORE</h6>
+                            <div class="score-badge" id="stat-ai-score">70</div>
+                            <p class="small text-muted mb-0">Ranks compatibility, response speed & availability</p>
+                        </div>
+                    </div>
+
+                    <!-- Total Donations -->
+                    <div class="col-md-3">
+                        <div class="glass-card stat-widget h-100">
+                            <div>
+                                <h6 class="text-secondary small">COMPLETED DONATIONS</h6>
+                                <h2 class="text-white fw-bold mb-0 mt-2" id="stat-total-donations">0</h2>
+                                <span class="small text-success mt-1 d-inline-block"><i class="fa-solid fa-circle-check"></i> Verified entries</span>
+                            </div>
+                            <div class="stat-icon red"><i class="fa-solid fa-droplet"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Avg Response speed -->
+                    <div class="col-md-3">
+                        <div class="glass-card stat-widget h-100">
+                            <div>
+                                <h6 class="text-secondary small">AVERAGE SPEED</h6>
+                                <h2 class="text-white fw-bold mb-0 mt-2" id="stat-response-speed">5 min</h2>
+                                <span class="small text-secondary mt-1 d-inline-block">Average response time</span>
+                            </div>
+                            <div class="stat-icon blue"><i class="fa-solid fa-bolt"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Badge count -->
+                    <div class="col-md-3">
+                        <div class="glass-card stat-widget h-100">
+                            <div>
+                                <h6 class="text-secondary small">REWARD BADGES</h6>
+                                <h2 class="text-white fw-bold mb-0 mt-2" id="stat-badge-count">0</h2>
+                                <span class="small text-warning mt-1 d-inline-block"><i class="fa-solid fa-trophy"></i> Elite levels unlocked</span>
+                            </div>
+                            <div class="stat-icon orange"><i class="fa-solid fa-award"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <!-- Health eligibility tracker -->
+                        <div class="glass-card mb-4">
+                            <h5 class="text-white mb-3"><i class="fa-solid fa-heart-circle-exclamation text-danger me-2"></i> Health Eligibility Tracker</h5>
+                            <div class="eligibility-status" id="eligibility-container">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="fs-1 text-success" id="eligibility-icon"><i class="fa-solid fa-circle-check"></i></div>
+                                    <div>
+                                        <h6 class="mb-1 text-white fw-bold" id="eligibility-title">Eligible to Donate</h6>
+                                        <p class="mb-0 text-secondary small" id="eligibility-desc">Your 90-day cooldown period has fully elapsed. You are in perfect condition to help save lives!</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress bg-dark rounded-pill" style="height: 10px;">
+                                <div class="progress-bar bg-danger rounded-pill" role="progressbar" style="width: 100%" id="eligibility-progress"></div>
+                            </div>
+                        </div>
+
+                        <!-- Gamified badges -->
+                        <div class="glass-card mb-4">
+                            <h5 class="text-white mb-4"><i class="fa-solid fa-trophy text-warning me-2"></i> Unlocked Hero Achievements</h5>
+                            <div class="row text-center g-3">
+                                <div class="col-4">
+                                    <div class="reward-badge locked" id="badge-newbie">
+                                        <i class="fa-solid fa-shield-heart mb-2"></i>
+                                        <h6 class="text-white small fw-bold">First Drop Hero</h6>
+                                        <span class="small text-muted" style="font-size: 0.7rem;">Completed 1st Donation</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="reward-badge locked" id="badge-lifesaver">
+                                        <i class="fa-solid fa-hand-holding-heart mb-2"></i>
+                                        <h6 class="text-white small fw-bold">Noble Life Saver</h6>
+                                        <span class="small text-muted" style="font-size: 0.7rem;">Completed 5+ Donations</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="reward-badge locked" id="badge-champion">
+                                        <i class="fa-solid fa-circle-check mb-2"></i>
+                                        <h6 class="text-white small fw-bold">LifeLink Champion</h6>
+                                        <span class="small text-muted" style="font-size: 0.7rem;">Completed 10+ Donations</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR Donor Card -->
+                    <div class="col-lg-4">
+                        <div class="glass-card text-center h-100 d-flex flex-column justify-content-between p-4 py-5">
+                            <div>
+                                <h5 class="text-white mb-2"><i class="fa-solid fa-qrcode text-danger me-2"></i> Official QR Donor ID</h5>
+                                <p class="text-secondary small mb-4">Present this digital code at hospitals to instantly seed records and bypass paperwork.</p>
+                            </div>
+                            <div class="bg-white p-3 rounded-4 mx-auto mb-4 d-flex justify-content-center align-items-center" style="width: 200px; height: 200px;">
+                                <canvas id="qr-canvas" width="170" height="170"></canvas>
+                            </div>
+                            <div>
+                                <h6 class="text-white fw-bold mb-0" id="qr-donor-name">Loading...</h6>
+                                <span class="badge bg-danger mt-2 px-3 py-1.5 rounded-pill fs-6" id="qr-donor-bg">O-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: DONATION HISTORY -->
+            <section id="section-history" class="d-none">
+                <div class="glass-card">
+                    <h5 class="text-white mb-4"><i class="fa-solid fa-circle-check text-success me-2"></i> Verified Donation Log</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-borderless align-middle small">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <th>CERTIFICATE ID</th>
+                                    <th>DATE</th>
+                                    <th>BLOOD GROUP</th>
+                                    <th>UNITS DONATED</th>
+                                    <th>HOSPITAL / CENTER</th>
+                                    <th>DIGITAL CERTIFICATE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-list">
+                                <tr>
+                                    <td colspan="6" class="text-center text-secondary py-4">No completed donations logged yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal fade" id="notif-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card p-0">
+                <div class="modal-header border-bottom border-secondary p-3">
+                    <h5 class="modal-title text-white"><i class="fa-regular fa-bell text-danger me-2"></i> Emergency Alerts & Updates</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3" id="notif-list" style="max-height: 350px; overflow-y: auto;">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="modal-footer border-top border-secondary p-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="markAllNotificationsRead()">Mark All Read</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core Donor Dashboard Scripts -->
+    <script>
+        const user = JSON.parse(localStorage.getItem('lifelink_user'));
+        const token = localStorage.getItem('lifelink_token');
+
+        if (!token || user.role !== 'donor') {
+            window.location.href = '/auth';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('header-user-name').innerText = user.name;
+            document.getElementById('welcome-text').innerText = `Role: Blood Donor | ID: LL-D-${user.id}`;
+            document.getElementById('qr-donor-name').innerText = user.name;
+            document.getElementById('qr-donor-bg').innerText = user.blood_group;
+
+            loadDonorStats();
+            loadNotifications();
+            generateMockQR();
+
+            // Poll notifications
+            setInterval(loadNotifications, 10000);
+        });
+
+        function switchSection(secId) {
+            document.getElementById('section-overview').classList.add('d-none');
+            document.getElementById('section-history').classList.add('d-none');
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+
+            if (secId === 'overview') {
+                document.getElementById('section-overview').classList.remove('d-none');
+                event.target.classList.add('active');
+            } else if (secId === 'history') {
+                document.getElementById('section-history').classList.remove('d-none');
+                event.target.classList.add('active');
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Load Donor dashboard analytical details
+        function loadDonorStats() {
+            fetch('/api/donors/dashboard', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Update stats
+                document.getElementById('stat-ai-score').innerText = Math.round(data.profile.ai_score);
+                document.getElementById('stat-total-donations').innerText = data.profile.total_donations;
+                
+                const speedMins = Math.round(data.profile.avg_response_speed / 60);
+                document.getElementById('stat-response-speed').innerText = `${speedMins} min`;
+                
+                document.getElementById('stat-badge-count').innerText = data.profile.badges.length;
+
+                // Toggle Availability state
+                const checkbox = document.getElementById('availability-toggle');
+                const label = document.getElementById('availability-label');
+                checkbox.checked = data.profile.is_available;
+                label.innerText = data.profile.is_available ? "Available" : "Busy";
+                label.className = data.profile.is_available ? "small text-success fw-bold ms-1" : "small text-muted fw-bold ms-1";
+
+                // Eligibility progress bar & status tracker
+                const eContainer = document.getElementById('eligibility-container');
+                const eProgress = document.getElementById('eligibility-progress');
+                const eTitle = document.getElementById('eligibility-title');
+                const eDesc = document.getElementById('eligibility-desc');
+                const eIcon = document.getElementById('eligibility-icon');
+
+                if (data.eligibility.is_eligible) {
+                    eContainer.className = "eligibility-status eligible";
+                    eIcon.className = "fs-1 text-success";
+                    eIcon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+                    eTitle.innerText = "Eligible to Donate Whole Blood";
+                    eDesc.innerText = "Your 90-day cooldown period has fully elapsed. You are in perfect condition to help save lives!";
+                    eProgress.style.width = "100%";
+                    eProgress.className = "progress-bar bg-success rounded-pill";
+                } else {
+                    eContainer.className = "eligibility-status cooldown";
+                    eIcon.className = "fs-1 text-warning";
+                    eIcon.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i>`;
+                    eTitle.innerText = `Eligible in ${data.eligibility.days_left_cooldown} Day(s)`;
+                    eDesc.innerText = `Whole blood donations require a strict medical cooldown of 90 days. Next eligible date in ${data.eligibility.days_left_cooldown} days. Keep resting!`;
+                    
+                    const pct = Math.round((1 - (data.eligibility.days_left_cooldown / 90)) * 100);
+                    eProgress.style.width = `${pct}%`;
+                    eProgress.className = "progress-bar bg-warning rounded-pill";
+                }
+
+                // Unlock badges visually
+                data.profile.badges.forEach(b => {
+                    const badgeDiv = document.getElementById(`badge-${b}`);
+                    if(badgeDiv) {
+                        badgeDiv.className = "reward-badge unlocked";
+                    }
+                });
+
+                // Populate history table
+                const histList = document.getElementById('history-list');
+                histList.innerHTML = "";
+
+                if(data.history.length === 0) {
+                    histList.innerHTML = `<tr><td colspan="6" class="text-center text-secondary py-4">No completed donations logged yet.</td></tr>`;
+                    return;
+                }
+
+                data.history.forEach(h => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = "1px solid var(--border-color)";
+                    row.innerHTML = `
+                        <td class="fw-bold">${h.certificate_code}</td>
+                        <td class="text-secondary">${h.donation_date}</td>
+                        <td><span class="badge bg-danger">${h.blood_group || user.blood_group}</span></td>
+                        <td>${h.units} Unit(s)</td>
+                        <td>${h.hospital_name || 'LifeLink Center'}</td>
+                        <td>
+                            <a href="/certificate/${h.certificate_code}" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1" style="font-size:0.75rem;">
+                                <i class="fa-solid fa-certificate me-1"></i> Print Certificate
+                            </a>
+                        </td>
+                    `;
+                    histList.appendChild(row);
+                });
+            });
+        }
+
+        // Toggle Availability Status API Call
+        function toggleDonorAvailability() {
+            const checkbox = document.getElementById('availability-toggle');
+            const label = document.getElementById('availability-label');
+            const isAvail = checkbox.checked ? 1 : 0;
+
+            fetch('/api/donors/toggle-availability', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ is_available: isAvail })
+            })
+            .then(res => res.json())
+            .then(data => {
+                label.innerText = checkbox.checked ? "Available" : "Busy";
+                label.className = checkbox.checked ? "small text-success fw-bold ms-1" : "small text-muted fw-bold ms-1";
+                
+                const successDiv = document.getElementById('donor-success');
+                successDiv.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> ${data.message}`;
+                successDiv.classList.remove('d-none');
+                
+                // Hide alert after 3 seconds
+                setTimeout(() => successDiv.classList.add('d-none'), 3000);
+                loadDonorStats();
+            });
+        }
+
+        // Dynamic Mock QR Canvas draw
+        function generateMockQR() {
+            const canvas = document.getElementById('qr-canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Draw clean bordered grid simulating QR code
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Mock QR blocks
+            ctx.fillStyle = '#1e293b';
+            for (let i = 8; i < w - 8; i += 8) {
+                for (let j = 8; j < h - 8; j += 8) {
+                    if (Math.random() > 0.4) {
+                        ctx.fillRect(i, j, 6, 6);
+                    }
+                }
+            }
+
+            // QR Corners (Standard markers)
+            const corners = [
+                {x: 8, y: 8}, {x: w - 40, y: 8}, {x: 8, y: h - 40}
+            ];
+
+            corners.forEach(c => {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(c.x, c.y, 32, 32);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(c.x + 4, c.y + 4, 24, 24);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(c.x + 8, c.y + 8, 16, 16);
+            });
+
+            // Center droplet overlay
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(w/2, h/2, 22, 0, 2*Math.PI);
+            ctx.fill();
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(w/2, h/2, 16, 0, 2*Math.PI);
+            ctx.fill();
+
+            // Heart/droplet sign
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px FontAwesome';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🩸', w/2, h/2);
+        }
+
+        // Notifications logic
+        let notifModal;
+        function toggleNotificationsModal() {
+            if(!notifModal) {
+                notifModal = new bootstrap.Modal(document.getElementById('notif-modal'));
+            }
+            notifModal.show();
+        }
+
+        function loadNotifications() {
+            fetch('/api/notifications', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('notif-list');
+                const badge = document.getElementById('notif-badge');
+                list.innerHTML = "";
+
+                let unreadCount = 0;
+                data.forEach(n => {
+                    if(!n.is_read) unreadCount++;
+
+                    const div = document.createElement('div');
+                    div.className = "p-2.5 rounded-3 mb-2 small";
+                    
+                    let icon = "fa-bell text-danger";
+                    if(n.type === 'emergency') icon = "fa-truck-medical text-danger animate-pulse";
+                    else if(n.type === 'badge') icon = "fa-trophy text-warning";
+                    else if(n.type === 'success') icon = "fa-circle-check text-success";
+                    
+                    div.style.background = n.is_read ? "rgba(255,255,255,0.01)" : "rgba(239, 68, 68, 0.08)";
+                    div.style.border = "1px solid " + (n.is_read ? "rgba(255,255,255,0.03)" : "rgba(239, 68, 68, 0.15)");
+                    div.innerHTML = `
+                        <div class="d-flex justify-content-between mb-1">
+                            <b class="text-white"><i class="fa-solid ${icon} me-1.5"></i> ${n.title}</b>
+                            <span class="text-muted small" style="font-size:0.75rem;">${n.created_at.split(' ')[1] || ''}</span>
+                        </div>
+                        <p class="mb-0 text-secondary" style="font-size:0.8rem;">${n.message}</p>
+                    `;
+                    list.appendChild(div);
+                });
+
+                if(unreadCount > 0) {
+                    badge.classList.remove('d-none');
+                } else {
+                    badge.classList.add('d-none');
+                }
+
+                if(data.length === 0) {
+                    list.innerHTML = `<p class="text-center text-secondary small py-4 mb-0">No notifications yet.</p>`;
+                }
+            });
+        }
+
+        function markAllNotificationsRead() {
+            fetch('/api/notifications/read', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(() => {
+                loadNotifications();
+                if(notifModal) notifModal.hide();
+            });
+        }
+    </script>
+</body>
+</html>

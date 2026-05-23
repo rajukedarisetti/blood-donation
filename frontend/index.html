@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeLink - AI Blood Donation Finder</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet.js CSS (Free Maps) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+    <!-- --- NAVIGATION BAR --- -->
+    <nav class="navbar navbar-expand-lg glass-navbar fixed-top py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                <i class="fa-solid fa-droplet text-danger fs-3"></i>
+                <span class="fs-4 fw-bold" style="font-family: var(--font-heading);">LifeLink</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold active" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="about.html">About & Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <div class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark/Light Mode">
+                            <i class="fa-solid fa-moon"></i>
+                        </div>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-premium-outline" href="login.html">Login Portal</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-premium" href="register.html">Sign Up</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- --- HERO SECTION --- -->
+    <header class="hero-wrapper">
+        <div class="container">
+            <div class="row align-items-center justify-content-between g-5">
+                <div class="col-lg-6 text-center text-lg-start animate-fade-in">
+                    <span class="badge bg-danger-light text-danger fw-bold px-3 py-2 mb-3 rounded-full">
+                        <i class="fa-solid fa-microchip-heading me-2"></i>AI-POWERED CONNECTIVITY
+                    </span>
+                    <h1 class="display-4 fw-extrabold mb-3" style="font-family: var(--font-heading); line-height: 1.15;">
+                        Save Lives with <br>
+                        <span class="gradient-text">AI-Powered</span> <br>
+                        Blood Connectivity
+                    </h1>
+                    <p class="lead text-secondary mb-4">
+                        LifeLink utilizes advanced machine learning to predict nearby donor availability and forecast blood demand. Connect with matching donors instantly during critical medical emergencies.
+                    </p>
+                    <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3">
+                        <a class="btn btn-premium btn-lg" href="login.html?role=patient">
+                            <i class="fa-solid fa-truck-medical me-2"></i>Request Blood
+                        </a>
+                        <a class="btn btn-premium-outline btn-lg" href="login.html?role=donor">
+                            <i class="fa-solid fa-hand-holding-heart me-2"></i>Become a Donor
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-5 text-center d-none d-lg-block animate-float">
+                    <img src="https://images.unsplash.com/photo-1615461066841-6116ecdccd04?auto=format&fit=crop&q=80&w=600" class="img-fluid rounded-circle shadow-lg border border-5 border-white" alt="AI Healthcare Illustration" style="max-height: 400px; width: 400px; object-fit: cover;">
+                </div>
+            </div>
+            
+            <!-- Quick Search Bar -->
+            <div class="emergency-search-bar d-flex align-items-center animate-fade-in">
+                <i class="fa-solid fa-magnifying-glass text-danger fs-5 ms-3"></i>
+                <input type="text" id="quick-blood-search" class="form-control" placeholder="Search compatible blood groups (e.g. Type A+, O-, Bangalore)...">
+                <button class="btn btn-premium px-4 py-2 me-1" id="quick-search-btn">
+                    Search
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- --- STATS ROW --- -->
+    <section class="stats-container container">
+        <div class="glass-card shadow-premium p-4">
+            <div class="row g-4 division-row">
+                <div class="col-6 col-md-3 border-end">
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-donors">1,480+</div>
+                        <div class="stat-label">Registered Donors</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 border-end">
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-completed">4,290+</div>
+                        <div class="stat-label">Completed Matches</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 border-end">
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-hospitals">82</div>
+                        <div class="stat-label">Active Hospitals</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-lives">5,100+</div>
+                        <div class="stat-label">Lives Saved</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- FEATURE SECTION --- -->
+    <section class="py-5 my-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="text-danger fw-bold text-uppercase tracking-wider">Features</span>
+                <h2 class="display-5 fw-bold" style="font-family: var(--font-heading);">Revolutionary Smart Tools</h2>
+                <p class="text-secondary max-w-md mx-auto">Connecting donors and patients through specialized clinical algorithms.</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="glass-card p-4 h-100">
+                        <div class="fs-1 text-danger mb-3"><i class="fa-solid fa-microchip"></i></div>
+                        <h4 class="fw-bold">AI Donor Recommendations</h4>
+                        <p class="text-secondary">Ranks and recommends compatible donors based on real-time geodetic distance, last donation rest status, and clinical compatibility percentages.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card p-4 h-100">
+                        <div class="fs-1 text-danger mb-3"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <h4 class="fw-bold">Availability Forecasting</h4>
+                        <p class="text-secondary">Machine learning models predict the exact response probability of a donor taking into account current hour, day-of-week, and history.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card p-4 h-100">
+                        <div class="fs-1 text-danger mb-3"><i class="fa-solid fa-map-location-dot"></i></div>
+                        <h4 class="fw-bold">Nearby Donor Tracking</h4>
+                        <p class="text-secondary">Interactive OpenStreetMap maps render real-time donor distributions, hospital routing, and filter search zones using geo-radius sliders.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- HOW IT WORKS --- -->
+    <section class="py-5 bg-light-gradient">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="text-danger fw-bold text-uppercase">Workflow</span>
+                <h2 class="display-5 fw-bold" style="font-family: var(--font-heading);">How LifeLink Works</h2>
+            </div>
+            
+            <div class="row g-4 text-center">
+                <div class="col-md-3">
+                    <div class="p-3">
+                        <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                            <span class="fs-3 fw-bold text-danger">1</span>
+                        </div>
+                        <h5 class="fw-bold">Register Account</h5>
+                        <p class="text-secondary fs-7">Sign up as a donor or a patient. Complete your clinical profile and geolocation details.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3">
+                        <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                            <span class="fs-3 fw-bold text-danger">2</span>
+                        </div>
+                        <h5 class="fw-bold">Raise Blood Request</h5>
+                        <p class="text-secondary fs-7">Patients submit critical blood demands. AI classifies request priority based on medical vitals.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3">
+                        <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                            <span class="fs-3 fw-bold text-danger">3</span>
+                        </div>
+                        <h5 class="fw-bold">AI Donor Matching</h5>
+                        <p class="text-secondary fs-7">LifeLink scores and highlights compatible donors nearby, instantly notifying active candidates.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3">
+                        <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                            <span class="fs-3 fw-bold text-danger">4</span>
+                        </div>
+                        <h5 class="fw-bold">Emergency Fulfill</h5>
+                        <p class="text-secondary fs-7">Donors accept and complete the request, receiving unique printable badges and safety certificates.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- TESTIMONIALS --- -->
+    <section class="py-5 my-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="text-danger fw-bold text-uppercase">Testimonials</span>
+                <h2 class="display-5 fw-bold" style="font-family: var(--font-heading);">What People Say</h2>
+            </div>
+            
+            <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner text-center max-w-lg mx-auto">
+                    <div class="carousel-item active">
+                        <div class="glass-card p-5 mx-auto" style="max-width: 600px;">
+                            <p class="lead text-secondary italic mb-4">"LifeLink saved my father's life. We needed O- blood during an emergency surgery, and within minutes, the AI recommended three compatible donors. John accepted and arrived in under an hour."</p>
+                            <h6 class="fw-bold mb-0">Sarah Connor</h6>
+                            <span class="fs-7 text-muted">Emergency Patient</span>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="glass-card p-5 mx-auto" style="max-width: 600px;">
+                            <p class="lead text-secondary italic mb-4">"The gamified badges and eligibility tracking on LifeLink keep me motivated to donate. It makes me feel like a literal superhero, knowing I have completed five donations already."</p>
+                            <h6 class="fw-bold mb-0">Jane Smith</h6>
+                            <span class="fs-7 text-muted">Century Blood Donor</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon bg-danger rounded-circle p-2" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon bg-danger rounded-circle p-2" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- FOOTER --- -->
+    <footer class="bg-dark text-white pt-5 pb-4">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-droplet text-danger me-2"></i>LifeLink</h5>
+                    <p class="text-muted fs-7">
+                        Revolutionizing emergency medical logistics through AI. Empowering local communities to match compatible donors and save lives in real-time.
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-bold mb-3">Quick Navigation</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-muted fs-7">Home</a></li>
+                        <li><a href="about.html" class="text-muted fs-7">About Us</a></li>
+                        <li><a href="login.html" class="text-muted fs-7">Portal Login</a></li>
+                        <li><a href="register.html" class="text-muted fs-7">Sign Up</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-5">
+                    <h6 class="fw-bold mb-3">Emergency Contact</h6>
+                    <p class="text-muted fs-7 mb-1"><i class="fa-solid fa-phone text-danger me-2"></i>LifeLink Hotline: **+1-555-911-LIFE** (24/7)</p>
+                    <p class="text-muted fs-7 mb-3"><i class="fa-solid fa-envelope text-danger me-2"></i>Support Email: emergency@lifelinkai.com</p>
+                    <div class="d-flex gap-3 fs-5">
+                        <a href="#" class="text-muted"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#" class="text-muted"><i class="fa-brands fa-linkedin"></i></a>
+                        <a href="#" class="text-muted"><i class="fa-brands fa-facebook"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-secondary my-4">
+            <div class="text-center text-muted fs-8">
+                &copy; 2026 LifeLink AI Blood Finder. Developed with absolute precision for emergency healthcare connectivity. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- --- FLOATING CHATBOT INTERFACE --- -->
+    <div class="chatbot-trigger" id="chatbot-trigger" title="LifeLink AI Assistant">
+        <i class="fa-solid fa-comments fs-4"></i>
+    </div>
+    
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-robot"></i>
+                <span class="fw-bold fs-6">LifeLink AI Assistant</span>
+            </div>
+            <i class="fa-solid fa-times cursor-pointer" id="chatbot-close-btn"></i>
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages">
+            <!-- Messages populated by JavaScript -->
+        </div>
+        <div class="chatbot-tips" id="chatbot-tips">
+            <!-- Tip buttons populated by JavaScript -->
+        </div>
+        <div class="chatbot-input-container">
+            <input type="text" id="chatbot-input" placeholder="Type clinical query (e.g. O- compatibility)...">
+            <button class="chatbot-mic-btn" id="chatbot-mic-btn" title="Speak to Search">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+            <button class="chatbot-send-btn" id="chatbot-send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- --- TOAST NOTIFICATIONS HOLDER --- -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Leaflet JS Map (Free Maps) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Core Application Frontend JS -->
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
