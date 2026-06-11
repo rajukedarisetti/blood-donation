@@ -4,10 +4,20 @@ import json
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'lifelink.db')
+# Detect Vercel serverless environment — use /tmp for writable SQLite
+IS_VERCEL = os.environ.get('VERCEL') == '1'
+
+if IS_VERCEL:
+    DB_PATH = '/tmp/lifelink.db'
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), 'lifelink.db')
+
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), 'schema.sql')
 
 def get_db_connection():
+    # Auto-initialize DB if it doesn't exist (handles Vercel cold starts)
+    if not os.path.exists(DB_PATH):
+        init_db()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn

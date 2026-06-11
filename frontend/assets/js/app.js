@@ -3,7 +3,7 @@
    Handles State, JWT Auth, Maps, Charts, Chatbot & Voice Search
    ======================================================== */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 // --- SESSION & STATE STATE HELPERS ---
 function getAuthToken() {
@@ -1205,7 +1205,21 @@ function initVoiceSpeechSearch() {
     });
 }
 
-// --- COMMMON UTIL MATHS HELPERS ---
+// --- COMMON UTIL MATHS HELPERS ---
+
+// Haversine formula — calculates geodetic distance in km between two lat/lon points
+function haversine(lat1, lon1, lat2, lon2) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return 9999.0;
+    const R = 6371.0; // Earth's radius in kilometers
+    const toRad = (deg) => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 function round(num, decimals) {
     const t = Math.pow(10, decimals);
     return Math.round(num * t) / t;

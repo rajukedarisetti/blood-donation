@@ -6,7 +6,7 @@ import random
 import sqlite3
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -14,42 +14,20 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from database import get_db_connection, DB_PATH
 import ai_models
 
-# Initialize Flask with custom template and static folders mapping to the frontend directory
+# Resolve absolute path to the frontend directory
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
+
+# Initialize Flask — serve frontend files as static assets
 app = Flask(
-    __name__, 
-    template_folder='../frontend/templates', 
-    static_folder='../frontend/static'
+    __name__,
+    template_folder='../frontend/templates',
+    static_folder=FRONTEND_DIR,
+    static_url_path=''
 )
 app.config['SECRET_KEY'] = 'lifelink_ultra_secure_ai_blood_secret_key_2026'
-CORS(app) # Enable CORS for all routes to support seamless frontend integrations
+CORS(app)  # Enable CORS for all routes to support seamless frontend integrations
 
-# ========================================================
-# FRONTEND PAGE ROUTING
-# ========================================================
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/auth')
-def auth_page():
-    return render_template('auth.html')
-
-@app.route('/donor')
-def donor_page():
-    return render_template('donor.html')
-
-@app.route('/patient')
-def patient_page():
-    return render_template('patient.html')
-
-@app.route('/admin')
-def admin_page():
-    return render_template('admin.html')
-
-@app.route('/certificate/<code>')
-def certificate_page(code):
-    return render_template('certificate.html', cert_code=code)
 
 # ========================================================
 # GEODETIC & SECURITY HELPER FUNCTIONS
@@ -103,32 +81,42 @@ def token_required(f):
     return decorated
 
 # ========================================================
-# JINJA TEMPLATE RENDERING ROUTEPAGES
+# FRONTEND PAGE SERVING — serves the actual HTML files from frontend/
 # ========================================================
 
 @app.route('/')
-def render_index():
-    return render_template('index.html')
+def serve_index():
+    return send_from_directory(FRONTEND_DIR, 'index.html')
 
-@app.route('/auth')
-def render_auth():
-    return render_template('auth.html')
+@app.route('/login.html')
+@app.route('/login')
+def serve_login():
+    return send_from_directory(FRONTEND_DIR, 'login.html')
 
+@app.route('/register.html')
+@app.route('/register')
+def serve_register():
+    return send_from_directory(FRONTEND_DIR, 'register.html')
+
+@app.route('/donor.html')
 @app.route('/donor')
-def render_donor():
-    return render_template('donor.html')
+def serve_donor():
+    return send_from_directory(FRONTEND_DIR, 'donor.html')
 
+@app.route('/patient.html')
 @app.route('/patient')
-def render_patient():
-    return render_template('patient.html')
+def serve_patient():
+    return send_from_directory(FRONTEND_DIR, 'patient.html')
 
+@app.route('/admin.html')
 @app.route('/admin')
-def render_admin():
-    return render_template('admin.html')
+def serve_admin():
+    return send_from_directory(FRONTEND_DIR, 'admin.html')
 
-@app.route('/certificate/<string:code>')
-def render_certificate(code):
-    return render_template('certificate.html', cert_code=code)
+@app.route('/about.html')
+@app.route('/about')
+def serve_about():
+    return send_from_directory(FRONTEND_DIR, 'about.html')
 
 # ========================================================
 # REST API ENDPOINTS - AUTHENTICATION
@@ -1275,5 +1263,6 @@ if __name__ == '__main__':
         from database import init_db
         init_db()
         
+    is_debug = os.environ.get('VERCEL') != '1'
     print("LifeLink REST API Server running on http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=is_debug)
