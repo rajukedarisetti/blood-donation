@@ -19,12 +19,7 @@ sys.path.insert(0, ROOT_DIR)
 # Set environment variable so database.py knows we're on Vercel
 os.environ['VERCEL'] = '1'
 
-# Import the Flask app from the backend
-try:
-    from backend.app import app
-except ImportError:
-    # pyrefly: ignore [missing-import]
-    from app import app
+from backend.app import app
 
 # Vercel expects the WSGI app to be exposed as `app`
 # The variable name must match the filename: index.py → `app`
