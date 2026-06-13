@@ -25,7 +25,8 @@ def get_db_connection():
 def init_db():
     """Initializes the database and seeds it if it is empty."""
     print("Initializing LifeLink database...")
-    conn = get_db_connection()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     # Execute schema.sql to create tables

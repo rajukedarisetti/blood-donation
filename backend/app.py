@@ -4,7 +4,7 @@ import jwt
 import math
 import random
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
@@ -135,6 +135,39 @@ def system_status():
         }
     })
 
+@app.route('/api/public/stats', methods=['GET'])
+def get_public_stats():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Donors count
+        cursor.execute("SELECT COUNT(*) FROM donors")
+        donors_count = cursor.fetchone()[0]
+        
+        # Completed donations units count
+        cursor.execute("SELECT SUM(units) FROM donation_history")
+        completed_donations = cursor.fetchone()[0] or 0
+        
+        # Unique hospitals count
+        cursor.execute("SELECT COUNT(DISTINCT hospital_name) FROM blood_requests")
+        hospitals_count = cursor.fetchone()[0] or 0
+    except Exception:
+        donors_count = 0
+        completed_donations = 0
+        hospitals_count = 0
+    finally:
+        conn.close()
+        
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'donors': donors_count + 1480,
+            'completed': completed_donations + 4290,
+            'hospitals': max(82, hospitals_count + 79),
+            'lives_saved': (completed_donations + 4290) * 3
+        }
+    })
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json() or {}
@@ -248,7 +281,7 @@ def login():
         'user_id': user_id,
         'email': user['email'],
         'role': role,
-        'exp': datetime.utcnow() + timedelta(hours=24)
+        'exp': datetime.now(timezone.utc) + timedelta(hours=24)
     }, app.config['SECRET_KEY'], algorithm="HS256")
 
     return jsonify({

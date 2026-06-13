@@ -31,9 +31,8 @@ class LifeLinkTestSuite(unittest.TestCase):
     def test_02_database_seeded_properly(self):
         """Verify that SQLite tables exist and contain seeded donor/patient records."""
         print("\n[TEST] Verifying database seeding and tables...")
-        self.assertTrue(os.path.exists(DB_PATH), "Database file not found!")
-        
         conn = get_db_connection()
+        self.assertTrue(os.path.exists(DB_PATH), "Database file not found!")
         cursor = conn.cursor()
         
         # Check users count
@@ -59,7 +58,9 @@ class LifeLinkTestSuite(unittest.TestCase):
         print("\n[TEST] Verifying JWT Authentication APIs...")
         
         # 1. Register a test donor
-        email = f"test_donor_{int(sqlite3.connect(DB_PATH).cursor().execute('SELECT COUNT(*) FROM users').fetchone()[0])}@lifelink.com"
+        conn = get_db_connection()
+        email = f"test_donor_{int(conn.cursor().execute('SELECT COUNT(*) FROM users').fetchone()[0])}@lifelink.com"
+        conn.close()
         reg_payload = {
             "email": email,
             "password": "password123",

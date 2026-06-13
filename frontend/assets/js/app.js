@@ -3,7 +3,11 @@
    Handles State, JWT Auth, Maps, Charts, Chatbot & Voice Search
    ======================================================== */
 
-const API_BASE = '/api';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000' && window.location.port !== ''
+    ? 'http://localhost:5000/api'
+    : window.location.protocol === 'file:'
+        ? 'http://localhost:5000/api'
+        : '/api';
 
 // --- SESSION & STATE STATE HELPERS ---
 function getAuthToken() {
@@ -109,7 +113,66 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Connect Voice Speech Search if Microphone exists
     initVoiceSpeechSearch();
+
+    // Load dynamic public stats on landing page
+    loadPublicStats();
+
+    // Hook up home page quick search bar
+    initHomepageSearch();
 });
+
+// --- PUBLIC LANDING PAGE DYNAMIC HELPERS ---
+async function loadPublicStats() {
+    const donorsEl = document.getElementById('stat-donors');
+    const completedEl = document.getElementById('stat-completed');
+    const hospitalsEl = document.getElementById('stat-hospitals');
+    const livesEl = document.getElementById('stat-lives');
+    
+    if (!donorsEl && !completedEl && !hospitalsEl && !livesEl) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/public/stats`);
+        const result = await response.json();
+        if (result.status === 'success') {
+            const data = result.data;
+            if (donorsEl) donorsEl.textContent = `${data.donors.toLocaleString()}+`;
+            if (completedEl) completedEl.textContent = `${data.completed.toLocaleString()}+`;
+            if (hospitalsEl) hospitalsEl.textContent = data.hospitals.toLocaleString();
+            if (livesEl) livesEl.textContent = `${data.lives_saved.toLocaleString()}+`;
+        }
+    } catch (error) {
+        console.error("Failed to load public stats:", error);
+    }
+}
+
+function initHomepageSearch() {
+    const searchBtn = document.getElementById('quick-search-btn');
+    const searchInput = document.getElementById('quick-blood-search');
+    
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (query) {
+                window.location.href = `login.html?search=${encodeURIComponent(query)}`;
+            }
+        });
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const query = searchInput.value.trim();
+                if (query) {
+                    window.location.href = `login.html?search=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+    }
+    
+    // Prefills/toasts search parameter in login if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('search');
+    if (searchQuery) {
+        showToast("Search Connection", `Log in to find compatible donors matching "${searchQuery}"!`, "info");
+    }
+}
 
 function updateThemeToggleIcon(theme) {
     const icon = document.querySelector('#theme-toggle-btn i');
