@@ -553,6 +553,39 @@ def create_blood_request(current_user):
         }
     }), 201
 
+@app.route('/api/hospitals', methods=['GET'])
+def get_hospitals_and_banks():
+    lat = request.args.get('latitude', type=float)
+    lon = request.args.get('longitude', type=float)
+    max_dist = request.args.get('max_distance', default=15.0, type=float)
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM hospitals_and_banks")
+    rows = cursor.fetchall()
+    conn.close()
+    
+    results = []
+    for r in rows:
+        row_dict = dict(r)
+        if lat is not None and lon is not None:
+            dist = haversine(lat, lon, row_dict['latitude'], row_dict['longitude'])
+            row_dict['distance_km'] = round(dist, 2)
+            if dist <= max_dist:
+                results.append(row_dict)
+        else:
+            row_dict['distance_km'] = None
+            results.append(row_dict)
+            
+    # Sort by distance if coords provided
+    if lat is not None and lon is not None:
+        results.sort(key=lambda x: x['distance_km'])
+        
+    return jsonify({
+        'status': 'success',
+        'data': results
+    })
+
 @app.route('/api/requests', methods=['GET'])
 def list_requests():
     conn = get_db_connection()
@@ -575,9 +608,9 @@ def list_requests():
             ORDER BY 
                 CASE br.priority 
                     WHEN 'Critical' THEN 1
-                    WHEN 'High' THEN 2
-                    WHEN 'Medium' THEN 3
-                    WHEN 'Low' THEN 4
+                    WHEN 'Urgent' THEN 2
+                    WHEN 'Normal' THEN 3
+                    ELSE 4
                 END, br.id DESC
         """)
         
@@ -1204,23 +1237,42 @@ def complete_donation_record(current_user):
 # ========================================================
 
 def handle_chat_query(message):
-    response_text = "I'm LifeLink AI, your blood connectivity assistant. How can I save a life today? You can ask me about: **Eligibility guidelines**, **Blood compatibility matches**, or **how to raise emergency requests**."
+    response_text = "I'm LifeLink AI, your blood connectivity assistant. How can I save a life today? You can ask me about: **Eligibility criteria**, **Donation intervals**, **Nearby blood banks**, or **Blood compatibility matches**."
     
     if not message:
-         return jsonify({'reply': response_text, 'tips': ["Are O- compatible with A+?", "Check donation eligibility"]})
+         return jsonify({'reply': response_text, 'tips': ["Who can donate blood?", "What are donation intervals?", "Find nearby blood banks"]})
          
-    if "eligible" in message or "qualification" in message or "can i donate" in message:
+    message_lower = message.lower().strip()
+    
+    if any(k in message_lower for k in ["who can donate", "eligibility", "eligible", "qualification", "criteria", "can i donate"]):
         response_text = """
-<b>🩸 Am I Eligible to Donate Blood?</b><br>
-According to standard clinical regulations, here are the main eligibility benchmarks:<br>
+<b>🩸 Who Can Donate Blood? (Eligibility Criteria)</b><br>
+To ensure the safety of both donors and patients, you must meet these key benchmarks:<br>
 1. <b>Age</b>: You must be between <b>18 and 65 years old</b>.<br>
-2. <b>Weight</b>: Minimum weight of <b>50 kg (110 lbs)</b> is mandatory.<br>
-3. <b>Health</b>: No active infections, chronic diseases, or fever in the last 48 hours.<br>
-4. <b>Cooldown Time</b>: At least <b>90 days</b> must have passed since your last blood donation.<br>
-5. <b>Travel/Medication</b>: No recent dental surgeries (24h) or high-risk travel.<br><br>
-<i>LifeLink includes an eligibility counter directly in your Donor Dashboard to track your precise date!</i>
+2. <b>Weight</b>: A minimum weight of <b>50 kg (110 lbs)</b> is required.<br>
+3. <b>Hemoglobin</b>: Minimum hemoglobin level of <b>12.5 g/dL</b> is verified at the donation center.<br>
+4. <b>General Health</b>: You must feel well and be free from active infections, fever, cold, or flu.<br>
+5. <b>Cooldown Rest</b>: You must meet the required donation interval since your last whole blood donation.
         """
-    elif "compat" in message or "match" in message or "give to" in message or "receive" in message:
+    elif any(k in message_lower for k in ["interval", "cooldown", "how often", "frequency", "days", "months"]):
+        response_text = """
+<b>⏳ Donation Intervals (Frequency & Cooldown)</b><br>
+To protect donor health and allow your body to fully replenish its iron levels, the clinical standard intervals are:<br>
+- <b>Whole Blood</b>: A mandatory cooldown of <b>90 days (3 months)</b> is required between donations.<br>
+- <b>Platelets / Plasma</b>: Can be donated more frequently (every 14 days), but whole blood is the core focus of emergency LifeLink alerts.
+        """
+    elif any(k in message_lower for k in ["bank", "hospital", "facility", "nearby", "where to donate", "location"]):
+        response_text = """
+<b>📍 Nearby Blood Banks & Hospitals (Bangalore Area)</b><br>
+Here are the primary certified medical blood banks and hospitals connected on our network:<br>
+1. <b>Bangalore Blood Bank</b> - Residency Rd (Contact: +91-80-555-1234)<br>
+2. <b>Red Cross Blood Depot</b> - Race Course Rd (Contact: +91-80-555-5678)<br>
+3. <b>Mallya Hospital & Trauma Center</b> - Vittal Mallya Rd (Contact: +91-80-555-9999)<br>
+4. <b>St. John's Medical College & Hospital</b> - Sarjapur Rd (Contact: +91-80-555-8888)<br>
+5. <b>Fortis Hospital</b> - Cunningham Rd (Contact: +91-80-555-7777)<br><br>
+<i>You can view all facilities mapped with precise distances relative to emergency requests directly inside the Patient Dashboard!</i>
+        """
+    elif "compat" in message_lower or "match" in message_lower or "give to" in message_lower or "receive" in message_lower:
         response_text = """
 <b>🔄 Blood Group Compatibility Quick Check</b><br>
 Here is a breakdown of clinical transfusion compatibility rules:<br>
@@ -1230,25 +1282,18 @@ Here is a breakdown of clinical transfusion compatibility rules:<br>
 - <b>A Positive (A+)</b>: Can give to A+, AB+; receives from A+, A-, O+, O-.<br><br>
 <i>Type any comparison (e.g. 'Can O- give to B+') to see an instant match analysis!</i>
         """
-    elif "cooldown" in message or "how often" in message or "days" in message:
-        response_text = """
-<b>⏳ Donation Frequency (Cooldown)</b><br>
-To protect donor health and allow your body to fully replenish iron levels:<br>
-- <b>Whole Blood</b>: A mandatory rest period of <b>90 days (3 months)</b> is required between donations.<br>
-- <b>Platelets / Plasma</b>: Can be donated more frequently (every 14 days), but whole blood is the core focus of emergency LifeLink alerts.
-        """
-    elif "o-" in message and "a+" in message:
+    elif "o-" in message_lower and "a+" in message_lower:
         response_text = "Yes! <b>O- is compatible with A+</b>. Since O- is the universal donor type, any patient with A+ blood can safely receive O- red blood cells."
-    elif "request" in message or "emergency" in message or "raise" in message:
+    elif "request" in message_lower or "emergency" in message_lower or "raise" in message_lower:
         response_text = """
 <b>🚨 How to Create an Emergency Blood Request</b><br>
 1. Log in as a <b>Patient</b> or <b>Hospital</b> profile.<br>
 2. Navigate to your <b>Patient Dashboard</b>.<br>
 3. Complete the <b>Emergency Request Form</b> with details: hospital location, blood group, units, and priority factors (hemoglobin, bleeding).<br>
-4. LifeLink AI will classify the severity and broadcast notifications to all compatible donors in a <b>15km radius</b>.<br>
+4. LifeLink AI will classify the severity (Critical, Urgent, Normal) and broadcast notifications to all compatible donors in a <b>15km radius</b>.<br>
 5. You can view matching donors ranked by suitability in real-time.
         """
-    elif "badge" in message or "reward" in message or "score" in message:
+    elif "badge" in message_lower or "reward" in message_lower or "score" in message_lower:
         response_text = """
 <b>🎖️ LifeLink Donor Rewards & Gamification</b><br>
 We believe in honoring our everyday heroes! On your <b>Donor Dashboard</b>, you can track:<br>
@@ -1268,11 +1313,13 @@ def chat_assistant():
     res = handle_chat_query(message)
     res_data = res.get_json()
     
-    quick_tips = ["Are O- compatible with A+?", "Check donation eligibility", "Create emergency request"]
-    if "eligible" in message:
-        quick_tips = ["How long is cooldown?", "Can I donate with diabetes?"]
-    elif "compat" in message:
-        quick_tips = ["Can O- give to A+?", "Compatible groups for AB-"]
+    quick_tips = ["Who can donate blood?", "What are donation intervals?", "Find nearby blood banks", "Are O- compatible with A+?"]
+    if "eligible" in message or "who can" in message:
+        quick_tips = ["What are donation intervals?", "Find nearby blood banks"]
+    elif "interval" in message or "cooldown" in message:
+        quick_tips = ["Who can donate blood?", "Find nearby blood banks"]
+    elif "bank" in message or "hospital" in message:
+        quick_tips = ["Who can donate blood?", "What are donation intervals?"]
         
     return jsonify({
         'response': res_data['reply'],

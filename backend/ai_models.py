@@ -225,11 +225,11 @@ def predict_blood_demand(blood_group, historical_rolling_average, active_epidemi
 # 4. EMERGENCY PRIORITY CLASSIFICATION (DECISION TREE)
 # ========================================================
 
-PRIORITY_LABELS = {0: 'Low', 1: 'Medium', 2: 'High', 3: 'Critical'}
+PRIORITY_LABELS = {0: 'Normal', 1: 'Normal', 2: 'Urgent', 3: 'Critical'}
 
 def predict_emergency_priority(hemoglobin_level, active_bleeding, trauma_or_accident, surgery_scheduled, patient_age):
     """
-    Predicts priority of a request (Low, Medium, High, Critical)
+    Predicts priority of a request (Normal, Urgent, Critical)
     using trained Decision Tree. Falls back to deterministic heuristic if ML libraries/models unavailable.
     """
     load_models()
@@ -248,7 +248,7 @@ def predict_emergency_priority(hemoglobin_level, active_bleeding, trauma_or_acci
             
             X_scaled = scaler.transform(features)
             class_idx = model.predict(X_scaled)[0]
-            return PRIORITY_LABELS.get(int(class_idx), 'Medium')
+            return PRIORITY_LABELS.get(int(class_idx), 'Urgent')
         except Exception as e:
             pass
 
@@ -273,8 +273,6 @@ def predict_emergency_priority(hemoglobin_level, active_bleeding, trauma_or_acci
 
     if score >= 6:
         return 'Critical'
-    elif score >= 4:
-        return 'High'
-    elif score >= 2:
-        return 'Medium'
-    return 'Low'
+    elif score >= 3:
+        return 'Urgent'
+    return 'Normal'

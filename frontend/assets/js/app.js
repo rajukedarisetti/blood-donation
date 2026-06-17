@@ -388,6 +388,51 @@ if (emergencyRequestForm) {
 }
 
 // Select a specific request and call the AI models
+// Select a specific request and call the AI models
+let cachedFacilities = [];
+let cachedDonors = [];
+let lastCenterLat = null;
+let lastCenterLon = null;
+
+async function loadNearbyFacilities(lat, lon, radiusLimit) {
+    try {
+        const response = await fetch(`${API_BASE}/hospitals?latitude=${lat}&longitude=${lon}&max_distance=50.0`);
+        const result = await response.json();
+        if (result.status === 'success') {
+            cachedFacilities = result.data;
+            renderFacilitiesTable(radiusLimit);
+        }
+    } catch (error) {
+        console.error("Load nearby facilities error:", error);
+    }
+}
+
+function renderFacilitiesTable(radiusLimit) {
+    const tbody = document.getElementById('facilities-table-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    const filtered = cachedFacilities.filter(f => f.distance_km <= radiusLimit);
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-3 text-secondary">No blood banks or hospitals found within ${radiusLimit}km.</td></tr>`;
+        return;
+    }
+    
+    filtered.forEach(f => {
+        const typeBadge = f.type === 'Blood Bank' ? 'badge bg-danger text-white' : 'badge bg-primary text-white';
+        tbody.innerHTML += `
+            <tr>
+                <td class="fw-bold text-dark">${f.name}</td>
+                <td><span class="${typeBadge}">${f.type}</span></td>
+                <td><a href="tel:${f.phone}" class="text-secondary"><i class="fa-solid fa-phone me-1"></i>${f.phone}</a></td>
+                <td class="text-muted text-truncate" style="max-width: 150px;" title="${f.address}">${f.address}</td>
+                <td class="text-end fw-bold text-danger">${f.distance_km} km</td>
+            </tr>
+        `;
+    });
+}
+
 async function selectPatientRequestForMatching(reqId, bloodGroup, lat, lon) {
     const token = getAuthToken();
     
@@ -458,15 +503,24 @@ async function selectPatientRequestForMatching(reqId, bloodGroup, lat, lon) {
                             ${isCooldown ? `<span class="badge bg-warning text-dark"><i class="fa-solid fa-triangle-exclamation"></i> Cooldown: ${match.cooldown_days_left}d</span>` : ''}
                         </div>
                         <button class="btn btn-premium py-1 px-3 fs-8" onclick="triggerAlertAlert('${match.name}', '${match.phone}')" ${isCooldown ? 'disabled' : ''}>
-                            <i class="fa-solid fa-bell me-1"></i>Alert Direct
+                            <i class="fa-solid fa-bell me-1"></i>Alert
                         </button>
                     </div>
                 </div>
             `;
         });
         
+        lastCenterLat = lat;
+        lastCenterLon = lon;
+        cachedDonors = result.data;
+        
+        const slider = document.getElementById('map-radius-slider');
+        const radiusLimit = slider ? parseInt(slider.value) : 15;
+        
+        await loadNearbyFacilities(lat, lon, radiusLimit);
+        
         // PLOT MAP CHANNELS
-        initializeLeafletPatientMap(lat, lon, result.data);
+        initializeLeafletPatientMap(lat, lon, cachedDonors, cachedFacilities);
     } catch (error) {
         console.error("AI recommendations error:", error);
     }
@@ -476,8 +530,10 @@ function triggerAlertAlert(name, phone) {
     showToast("Notification Sent", `Broadcasted direct emergency SMS/Ping alert to donor ${name} (${phone})!`, "success");
 }
 
+let facilitiesMarkersLayer = null;
+
 // Leaflet geodetic map plotting
-function initializeLeafletPatientMap(centerLat, centerLon, compatibleDonors) {
+function initializeLeafletPatientMap(centerLat, centerLon, compatibleDonors, facilities = []) {
     const slider = document.getElementById('map-radius-slider');
     const radiusLabel = document.getElementById('radius-value');
     
@@ -515,6 +571,7 @@ function initializeLeafletPatientMap(centerLat, centerLon, compatibleDonors) {
         }).addTo(patientMap);
         
         donorMarkersLayer = L.layerGroup().addTo(patientMap);
+        facilitiesMarkersLayer = L.layerGroup().addTo(patientMap);
         
         // Listen slider updates
         if (slider) {
@@ -523,9 +580,17 @@ function initializeLeafletPatientMap(centerLat, centerLon, compatibleDonors) {
                 if (radiusLabel) radiusLabel.textContent = `${newRadius} km`;
                 if (mapRadiusCircle) {
                     mapRadiusCircle.setRadius(newRadius * 1000);
-                    // Filter markers according to new radius
-                    filterMapMarkersByRadius(newRadius);
                 }
+                filterMapMarkersByRadius(newRadius);
+                renderFacilitiesTable(newRadius);
+            });
+        }
+
+        // Listen map layer toggle clicks
+        const layerToggles = document.getElementById('map-layer-toggles');
+        if (layerToggles) {
+            layerToggles.addEventListener('change', () => {
+                filterMapMarkersByRadius(slider ? parseInt(slider.value) : 15);
             });
         }
     } else {
@@ -539,8 +604,9 @@ function initializeLeafletPatientMap(centerLat, centerLon, compatibleDonors) {
     
     // Clear old markers
     donorMarkersLayer.clearLayers();
+    facilitiesMarkersLayer.clearLayers();
     
-    // Icon variations
+    // Icon variations for donors
     const availableIcon = L.icon({
         iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -558,43 +624,103 @@ function initializeLeafletPatientMap(centerLat, centerLon, compatibleDonors) {
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
     });
+
+    // Icon variations for facilities
+    const hospitalIcon = L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    const bankIcon = L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
     
     // Add compatible donor pins
     compatibleDonors.forEach(d => {
         const icon = d.cooldown_days_left === 0 && d.is_available === 1 ? availableIcon : busyIcon;
         const marker = L.marker([d.latitude, d.longitude], { icon: icon });
-        
-        // Add geodetic distance property to marker context for runtime filter
         marker.distance_km = d.distance_km;
         
         const popupText = `
-            <div style="font-family: var(--font-sans);">
+            <div style="font-family: var(--font-sans); min-width: 150px;">
                 <strong class="text-danger">${d.name} (${d.blood_group})</strong>
-                <br><b>Geodetic Proximity:</b> ${d.distance_km} km
-                <br><b>AI Match Rate:</b> ${d.ai_match_score}%
-                <br><b>Predicted Response:</b> ${d.ai_availability_probability}%
-                <br><b>Status:</b> ${d.cooldown_days_left > 0 ? `Cooldown (${d.cooldown_days_left}d left)` : (d.is_available ? 'Available' : 'Offline')}
+                <br><b>Distance:</b> ${d.distance_km} km
+                <br><b>AI Match:</b> ${d.ai_match_score}%
+                <br><b>Status:</b> ${d.cooldown_days_left > 0 ? `Cooldown (${d.cooldown_days_left}d)` : (d.is_available ? 'Available' : 'Offline')}
             </div>
         `;
-        
         marker.bindPopup(popupText);
         donorMarkersLayer.addLayer(marker);
+    });
+
+    // Add facility pins
+    facilities.forEach(f => {
+        const icon = f.type === 'Blood Bank' ? bankIcon : hospitalIcon;
+        const marker = L.marker([f.latitude, f.longitude], { icon: icon });
+        marker.distance_km = f.distance_km;
+        
+        const popupText = `
+            <div style="font-family: var(--font-sans); min-width: 150px;">
+                <strong class="text-primary">${f.name}</strong>
+                <br><b>Type:</b> <span class="badge bg-secondary">${f.type}</span>
+                <br><b>Distance:</b> ${f.distance_km} km
+                <br><b>Phone:</b> ${f.phone}
+                <br><b>Address:</b> ${f.address}
+            </div>
+        `;
+        marker.bindPopup(popupText);
+        facilitiesMarkersLayer.addLayer(marker);
     });
     
     filterMapMarkersByRadius(radiusKm);
 }
 
 function filterMapMarkersByRadius(radiusLimit) {
-    if (!donorMarkersLayer) return;
-    
-    donorMarkersLayer.eachLayer(marker => {
-        if (marker.distance_km > radiusLimit) {
-            patientMap.removeLayer(marker);
-        } else {
-            marker.addTo(patientMap);
+    if (!patientMap) return;
+    const showDonors = document.getElementById('layer-donors')?.checked || document.getElementById('layer-all')?.checked || false;
+    const showFacilities = document.getElementById('layer-facilities')?.checked || document.getElementById('layer-all')?.checked || false;
+
+    // Control Donors layer visibility
+    if (showDonors && donorMarkersLayer) {
+        if (!patientMap.hasLayer(donorMarkersLayer)) {
+            donorMarkersLayer.addTo(patientMap);
         }
-    });
-}
+        donorMarkersLayer.eachLayer(marker => {
+            if (marker.distance_km > radiusLimit) {
+                patientMap.removeLayer(marker);
+            } else {
+                marker.addTo(patientMap);
+            }
+        });
+    } else if (donorMarkersLayer) {
+        patientMap.removeLayer(donorMarkersLayer);
+    }
+
+    // Control Facilities layer visibility
+    if (showFacilities && facilitiesMarkersLayer) {
+        if (!patientMap.hasLayer(facilitiesMarkersLayer)) {
+            facilitiesMarkersLayer.addTo(patientMap);
+        }
+        facilitiesMarkersLayer.eachLayer(marker => {
+            if (marker.distance_km > radiusLimit) {
+                patientMap.removeLayer(marker);
+            } else {
+                marker.addTo(patientMap);
+            }
+        });
+    } else if (facilitiesMarkersLayer) {
+        patientMap.removeLayer(facilitiesMarkersLayer);
+    }
+}}
 
 // --- DONOR PORTAL INTERACTIVITIES ---
 

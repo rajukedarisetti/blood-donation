@@ -179,6 +179,22 @@ def seed_data(conn):
         predictions_data
     )
 
+    # 8. Seed Hospitals and Blood Banks
+    hospitals_banks_data = [
+        ('Bangalore Blood Bank', 'Blood Bank', '+91-80-555-1234', '12, Residency Rd, Bengaluru, KA 560025', 12.9680, 77.5920),
+        ('Red Cross Blood Depot', 'Blood Bank', '+91-80-555-5678', '45, Race Course Rd, Bengaluru, KA 560001', 12.9750, 77.5890),
+        ('Mallya Hospital & Trauma Center', 'Hospital', '+91-80-555-9999', '2, Vittal Mallya Rd, Bengaluru, KA 560001', 12.9650, 77.5970),
+        ('St. John\'s Medical College & Hospital', 'Hospital', '+91-80-555-8888', 'Sarjapur Rd, John Nagar, Bengaluru, KA 560034', 12.9340, 77.6210),
+        ('Fortis Hospital', 'Hospital', '+91-80-555-7777', '14, Cunningham Rd, Vasanth Nagar, Bengaluru, KA 560052', 12.9780, 77.5910),
+        ('Narayana Health Blood Bank', 'Blood Bank', '+91-80-555-4444', '258/A, Bommasandra Industrial Area, Bengaluru, KA 560099', 12.9720, 77.6110),
+        ('Columbia Asia Blood Bank', 'Blood Bank', '+91-80-555-3333', 'Hebbal, Outer Ring Rd, Bengaluru, KA 560024', 12.9890, 77.6080)
+    ]
+    cursor.executemany(
+        """INSERT INTO hospitals_and_banks (name, type, phone, address, latitude, longitude)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        hospitals_banks_data
+    )
+
     conn.commit()
     print("Database seeding completed successfully!")
 

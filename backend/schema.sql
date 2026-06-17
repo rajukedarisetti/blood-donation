@@ -93,3 +93,14 @@ CREATE TABLE IF NOT EXISTS ai_predictions_log (
     confidence_score REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 8. HOSPITALS AND BLOOD BANKS TABLE (Locations of hospitals and blood banks)
+CREATE TABLE IF NOT EXISTS hospitals_and_banks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'Hospital', 'Blood Bank'
+    phone VARCHAR(50) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL
+);
