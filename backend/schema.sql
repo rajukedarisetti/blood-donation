@@ -104,3 +104,11 @@ CREATE TABLE IF NOT EXISTS hospitals_and_banks (
     latitude REAL NOT NULL,
     longitude REAL NOT NULL
 );
+
+-- 9. PASSWORD RESETS TABLE (Handles transient 6-digit OTP verification codes)
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email VARCHAR(255) NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP NOT NULL
+);

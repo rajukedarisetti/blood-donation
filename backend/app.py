@@ -300,6 +300,96 @@ def login():
     })
 
 # ========================================================
+# FORGOT PASSWORD API ENDPOINTS
+# ========================================================
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json() or {}
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'status': 'error', 'message': 'Email is required!'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+
+    if not user:
+        conn.close()
+        # We still return success to prevent email enumeration, but we don't send an OTP
+        return jsonify({'status': 'success', 'message': 'If an account exists, an OTP has been sent.'}), 200
+
+    # Generate 6-digit OTP
+    otp = str(random.randint(100000, 999999))
+    expires_at = datetime.now() + timedelta(minutes=5)
+
+    # Insert or replace existing OTP
+    cursor.execute("SELECT id FROM password_resets WHERE email = ?", (email,))
+    existing = cursor.fetchone()
+    
+    if existing:
+        cursor.execute("UPDATE password_resets SET otp = ?, expires_at = ? WHERE email = ?", (otp, expires_at, email))
+    else:
+        cursor.execute("INSERT INTO password_resets (email, otp, expires_at) VALUES (?, ?, ?)", (email, otp, expires_at))
+
+    conn.commit()
+    conn.close()
+
+    print(f"[OTP DISPATCH] Sent reset code {otp} to {email}")
+
+    return jsonify({
+        'status': 'success',
+        'message': 'OTP sent successfully. Check your email.',
+        'otp_mock': otp # Include it in response for easy local testing 
+    }), 200
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json() or {}
+    email = data.get('email')
+    otp = data.get('otp')
+    new_password = data.get('new_password')
+
+    if not email or not otp or not new_password:
+        return jsonify({'status': 'error', 'message': 'Email, OTP, and new password are required!'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM password_resets WHERE email = ?", (email,))
+    reset_record = cursor.fetchone()
+
+    if not reset_record:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Invalid OTP or expired!'}), 400
+        
+    # Check expiration
+    expires_at = datetime.strptime(reset_record['expires_at'], "%Y-%m-%d %H:%M:%S.%f")
+    if datetime.now() > expires_at:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'OTP has expired! Please request a new one.'}), 400
+        
+    if reset_record['otp'] != otp:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Incorrect OTP!'}), 400
+
+    # Valid OTP, hash new password
+    hashed_pwd = generate_password_hash(new_password)
+    
+    # Update user password
+    cursor.execute("UPDATE users SET password_hash = ? WHERE email = ?", (hashed_pwd, email))
+    
+    # Delete the OTP record to prevent reuse
+    cursor.execute("DELETE FROM password_resets WHERE email = ?", (email,))
+    
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'success', 'message': 'Password has been reset successfully. You can now login.'}), 200
+
+# ========================================================
 # REST API ENDPOINTS - PROFILES & STATUS
 # ========================================================
 

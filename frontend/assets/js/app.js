@@ -223,6 +223,82 @@ if (loginForm) {
     });
 }
 
+// --- FORGOT PASSWORD API LOGIC ---
+
+const requestOtpForm = document.getElementById('request-otp-form');
+if (requestOtpForm) {
+    requestOtpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('forgot-email').value;
+        
+        try {
+            const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success') {
+                // If local testing is enabled, we get the mock OTP directly
+                if (result.otp_mock) {
+                    showToast("OTP Generated (Local Testing)", `Your OTP is: ${result.otp_mock}`, "info");
+                }
+                
+                // Transition to Step 2
+                document.getElementById('forgot-step-1').classList.add('d-none');
+                document.getElementById('forgot-step-2').classList.remove('d-none');
+            } else {
+                showToast("Request Failed", result.message, "warning");
+            }
+        } catch (error) {
+            console.error("Forgot password error:", error);
+            showToast("Connection Error", "Could not connect to Flask API server.", "warning");
+        }
+    });
+}
+
+const resetPasswordForm = document.getElementById('reset-password-form');
+if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('forgot-email').value; // from step 1
+        const otp = document.getElementById('reset-otp').value;
+        const new_password = document.getElementById('new-password').value;
+        
+        try {
+            const response = await fetch(`${API_BASE}/auth/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp, new_password })
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast("Password Reset Successful", result.message, "success");
+                
+                // Close modal
+                const modalElement = document.getElementById('forgotPasswordModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                
+                // Reset form states
+                document.getElementById('forgot-step-2').classList.add('d-none');
+                document.getElementById('forgot-step-1').classList.remove('d-none');
+                requestOtpForm.reset();
+                resetPasswordForm.reset();
+            } else {
+                showToast("Reset Failed", result.message, "warning");
+            }
+        } catch (error) {
+            console.error("Reset password error:", error);
+            showToast("Connection Error", "Could not connect to Flask API server.", "warning");
+        }
+    });
+}
+
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
