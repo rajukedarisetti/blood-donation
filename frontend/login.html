@@ -33,17 +33,17 @@
             <!-- Login Role Tabs -->
             <ul class="nav nav-pills mb-4 nav-justified" id="roleTab" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="donor-tab" data-bs-toggle="pill" data-bs-target="#donor-login" type="button" role="tab" onclick="setLoginRole('donor')">
+                    <button class="nav-link active fw-bold" id="donor-tab" type="button" onclick="setLoginRole('donor')">
                         <i class="fa-solid fa-hand-holding-heart me-1"></i>Donor
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" id="patient-tab" data-bs-toggle="pill" data-bs-target="#patient-login" type="button" role="tab" onclick="setLoginRole('patient')">
+                    <button class="nav-link fw-bold" id="patient-tab" type="button" onclick="setLoginRole('patient')">
                         <i class="fa-solid fa-bed-pulse me-1"></i>Patient
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin-login" type="button" role="tab" onclick="setLoginRole('admin')">
+                    <button class="nav-link fw-bold" id="admin-tab" type="button" onclick="setLoginRole('admin')">
                         <i class="fa-solid fa-user-gear me-1"></i>Admin
                     </button>
                 </li>
@@ -167,6 +167,17 @@
         
         function setLoginRole(role) {
             document.getElementById('login-role').value = role;
+            
+            // Manage active tab states visually
+            const tabs = ['donor', 'patient', 'admin'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`${t}-tab`);
+                if (t === role) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
         }
     </script>
 </body>

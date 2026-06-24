@@ -315,6 +315,8 @@ if (registerForm) {
         
         if (role === 'donor') {
             payload.blood_group = document.getElementById('register-blood-group').value;
+            const isAvail = document.getElementById('register-available').checked;
+            payload.is_available = isAvail ? 1 : 0;
         } else {
             payload.hospital_name = document.getElementById('register-hospital').value;
             payload.medical_condition = document.getElementById('register-condition').value;

@@ -178,9 +178,15 @@ def register():
     phone = data.get('phone')
     blood_group = data.get('blood_group', 'O+')
     
-    # Coordinates default to Bangalore (12.9716, 77.5946) if not specified
-    latitude = float(data.get('latitude', 12.9716))
-    longitude = float(data.get('longitude', 77.5946))
+    try:
+        latitude = float(data.get('latitude'))
+    except (TypeError, ValueError):
+        latitude = 12.9716
+        
+    try:
+        longitude = float(data.get('longitude'))
+    except (TypeError, ValueError):
+        longitude = 77.5946
     
     medical_condition = data.get('medical_condition', '')
     hospital_name = data.get('hospital_name', '')
@@ -206,10 +212,11 @@ def register():
         
         # Insert profile
         if role == 'donor':
+            is_available = int(data.get('is_available', 1))
             cursor.execute(
                 """INSERT INTO donors (user_id, name, phone, blood_group, latitude, longitude, 
-                   is_available, ai_donor_score, badges) VALUES (?, ?, ?, ?, ?, ?, 1, 75.0, '[]')""",
-                (user_id, name, phone, blood_group, latitude, longitude)
+                   is_available, ai_donor_score, badges) VALUES (?, ?, ?, ?, ?, ?, ?, 75.0, '[]')""",
+                (user_id, name, phone, blood_group, latitude, longitude, is_available)
             )
         elif role == 'patient':
             cursor.execute(

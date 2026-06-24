@@ -33,12 +33,12 @@
             <!-- Registration Role Tabs -->
             <ul class="nav nav-pills mb-4 nav-justified" id="regRoleTab" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="reg-donor-tab" data-bs-toggle="pill" data-bs-target="#donor-reg" type="button" role="tab" onclick="setRegRole('donor')">
+                    <button class="nav-link active fw-bold" id="reg-donor-tab" type="button" onclick="setRegRole('donor')">
                         <i class="fa-solid fa-hand-holding-heart me-1"></i>Register as Donor
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" id="reg-patient-tab" data-bs-toggle="pill" data-bs-target="#patient-reg" type="button" role="tab" onclick="setRegRole('patient')">
+                    <button class="nav-link fw-bold" id="reg-patient-tab" type="button" onclick="setRegRole('patient')">
                         <i class="fa-solid fa-bed-pulse me-1"></i>Register as Patient
                     </button>
                 </li>
@@ -163,13 +163,19 @@
             
             const donorFields = document.getElementById('donor-specific-fields');
             const patientFields = document.getElementById('patient-specific-fields');
+            const donorTab = document.getElementById('reg-donor-tab');
+            const patientTab = document.getElementById('reg-patient-tab');
             
             if (role === 'donor') {
                 donorFields.classList.remove('d-none');
                 patientFields.classList.add('d-none');
+                donorTab.classList.add('active');
+                patientTab.classList.remove('active');
             } else {
                 donorFields.classList.add('d-none');
                 patientFields.classList.remove('d-none');
+                patientTab.classList.add('active');
+                donorTab.classList.remove('active');
             }
         }
         
