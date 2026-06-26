@@ -18,9 +18,13 @@ sys.path.insert(0, ROOT_DIR)
 # Set environment variable so database.py knows we're on Vercel
 os.environ['VERCEL'] = '1'
 
-# Initialize DB tables on every cold start (safe — uses CREATE TABLE IF NOT EXISTS)
-from backend.database import init_db
-init_db()
+# Safely attempt DB table creation on cold start — never crash the function
+try:
+    from backend.database import init_db
+    init_db()
+except Exception as e:
+    print(f"[WARNING] init_db() failed on cold start: {e}")
+    print("[INFO] Tables may not exist yet. Call /api/setup-db to initialize.")
 
 from backend.app import app
 
