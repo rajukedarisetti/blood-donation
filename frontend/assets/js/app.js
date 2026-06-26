@@ -831,6 +831,11 @@ async function loadDonorAlerts() {
         
         container.innerHTML = '';
         
+        if (!result.data) {
+            console.error("Load donor alerts error:", result.message);
+            return;
+        }
+        
         // Filter requests matching compatible groups and location radius (within 20km simulated)
         let alertCount = 0;
         
@@ -1022,6 +1027,12 @@ async function loadDonorHistory() {
         if (!tbody) return;
         
         tbody.innerHTML = '';
+        
+        if (!result.data) {
+            console.error("Load donor history error:", result.message);
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3 text-danger">Error loading history: ${result.message || 'Unknown error'}</td></tr>`;
+            return;
+        }
         
         if (result.data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3 text-secondary">You haven't completed any donations on this platform yet.</td></tr>`;
