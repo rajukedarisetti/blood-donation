@@ -11,7 +11,15 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Import database and AI engine helpers
-from database import get_db_connection, DB_PATH
+from database import get_db_connection, DB_PATH, IS_POSTGRES
+
+# Unified IntegrityError — works for both SQLite and PostgreSQL
+try:
+    import psycopg2
+    import psycopg2.errors
+    _INTEGRITY_ERRORS = (sqlite3.IntegrityError, psycopg2.errors.UniqueViolation)
+except ImportError:
+    _INTEGRITY_ERRORS = (sqlite3.IntegrityError,)
 import ai_models
 
 # Resolve absolute path to the frontend directory
@@ -233,7 +241,7 @@ def register():
         
         conn.commit()
         return jsonify({'status': 'success', 'message': 'Registration completed successfully!'}), 201
-    except sqlite3.IntegrityError:
+    except _INTEGRITY_ERRORS:
         return jsonify({'status': 'error', 'message': 'User with this email already exists!'}), 409
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -1434,12 +1442,15 @@ def chat_alias():
 # ========================================================
 
 if __name__ == '__main__':
-    # Verify database setup is initialized before running the REST API
-    if not os.path.exists(DB_PATH):
-        print("lifelink.db not found. Initializing database on startup...")
-        from database import init_db
+    # Initialize database on startup if needed
+    from database import init_db, IS_POSTGRES
+    if IS_POSTGRES:
+        print("Using Supabase PostgreSQL — initializing tables if needed...")
         init_db()
-        
+    elif not os.path.exists(DB_PATH):
+        print("lifelink.db not found. Initializing SQLite database...")
+        init_db()
+
     is_debug = os.environ.get('VERCEL') != '1'
     print("LifeLink REST API Server running on http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=is_debug)

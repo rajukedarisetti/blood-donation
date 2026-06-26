@@ -6,7 +6,6 @@ import os
 import sys
 
 # Add the backend directory to the Python path so imports work
-# Checks os.getcwd() first (Vercel project root at runtime) and falls back to __file__ relative path
 ROOT_DIR = os.getcwd()
 BACKEND_DIR = os.path.join(ROOT_DIR, 'backend')
 if not os.path.exists(os.path.join(BACKEND_DIR, 'app.py')):
@@ -19,7 +18,10 @@ sys.path.insert(0, ROOT_DIR)
 # Set environment variable so database.py knows we're on Vercel
 os.environ['VERCEL'] = '1'
 
+# Initialize DB tables on every cold start (safe — uses CREATE TABLE IF NOT EXISTS)
+from backend.database import init_db
+init_db()
+
 from backend.app import app
 
 # Vercel expects the WSGI app to be exposed as `app`
-# The variable name must match the filename: index.py → `app`
