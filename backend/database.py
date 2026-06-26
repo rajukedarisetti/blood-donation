@@ -1,20 +1,39 @@
 import os
 import json
 import sqlite3
+from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
 # ============================================================
 # DATABASE MODE DETECTION
 # Priority order (Vercel-safe, IPv4 pooler first):
-#   1. POSTGRES_URL           → Vercel Supabase integration pooler (IPv4, port 6543)
-#   2. POSTGRES_PRISMA_URL    → Session pooler fallback
-#   3. DATABASE_URL           → Custom URL (may be IPv6 direct — last resort)
+#   1. POSTGRES_URL        → Vercel Supabase pooler (IPv4, port 6543)
+#   2. POSTGRES_PRISMA_URL → Session pooler fallback
+#   3. DATABASE_URL        → Custom URL (last resort)
 # Local dev: falls back to SQLite
 # ============================================================
+
+# psycopg2-supported connection URI parameters only
+_VALID_PG_PARAMS = {
+    'host','port','dbname','user','password','sslmode','sslcert','sslkey',
+    'sslrootcert','connect_timeout','application_name','options'
+}
+
 def _clean_url(val):
-    """Strip whitespace/newlines injected by PowerShell piping."""
-    return val.strip() if val else None
+    """Strip whitespace, newlines, and unsupported query params from a Postgres URL."""
+    if not val:
+        return None
+    val = val.strip()
+    try:
+        parsed = urlparse(val)
+        # Keep only psycopg2-compatible query parameters
+        qs = parse_qs(parsed.query, keep_blank_values=True)
+        filtered = {k: v for k, v in qs.items() if k in _VALID_PG_PARAMS}
+        clean = parsed._replace(query=urlencode(filtered, doseq=True))
+        return urlunparse(clean)
+    except Exception:
+        return val
 
 DATABASE_URL = (
     _clean_url(os.environ.get('POSTGRES_URL')) or
@@ -31,6 +50,7 @@ else:
     DB_PATH = os.path.join(os.path.dirname(__file__), 'lifelink.db')
 
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), 'schema.sql')
+
 
 
 # ============================================================
