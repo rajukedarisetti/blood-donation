@@ -235,7 +235,7 @@ def register():
         
         # Insert profile
         if role == 'donor':
-            is_available = int(data.get('is_available', 1))
+            is_available = bool(int(data.get('is_available', 1)))
             cursor.execute(
                 """INSERT INTO donors (user_id, name, phone, blood_group, latitude, longitude, 
                    is_available, ai_donor_score, badges) VALUES (?, ?, ?, ?, ?, ?, ?, 75.0, '[]')""",
@@ -463,7 +463,7 @@ def update_profile(current_user):
                    WHERE user_id=?""",
                 (data.get('name'), data.get('phone'), data.get('blood_group'), 
                  float(data.get('latitude', 12.9716)), float(data.get('longitude', 77.5946)), 
-                 int(data.get('is_available', 1)), user_id)
+                 bool(int(data.get('is_available', 1))), user_id)
             )
         elif role == 'patient':
             cursor.execute(
@@ -488,7 +488,7 @@ def toggle_availability(current_user):
         return jsonify({'status': 'error', 'message': 'Only donors can change their availability!'}), 403
     
     data = request.get_json() or {}
-    status = int(data.get('is_available', 1))
+    status = bool(int(data.get('is_available', 1)))
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -635,7 +635,7 @@ def create_blood_request(current_user):
     request_id = cursor.lastrowid
     
     # Trigger notifications
-    cursor.execute("SELECT * FROM donors WHERE is_available = 1")
+    cursor.execute("SELECT * FROM donors WHERE is_available = True")
     donors = cursor.fetchall()
     count_alerted = 0
     for donor in donors:
@@ -1089,7 +1089,7 @@ def get_admin_analytics(current_user):
     cursor.execute("SELECT COUNT(*) FROM donors")
     total_donors = cursor.fetchone()[0]
     
-    cursor.execute("SELECT COUNT(*) FROM donors WHERE is_available = 1")
+    cursor.execute("SELECT COUNT(*) FROM donors WHERE is_available = True")
     available_donors = cursor.fetchone()[0]
     
     cursor.execute("SELECT COUNT(*) FROM blood_requests")
@@ -1123,7 +1123,7 @@ def get_admin_analytics(current_user):
         cursor.execute("SELECT SUM(units_needed) FROM blood_requests WHERE blood_group = ? AND status != 'Fulfilled'", (bg,))
         requested = cursor.fetchone()[0] or 0
         
-        cursor.execute("SELECT COUNT(*) FROM donors WHERE blood_group = ? AND is_available = 1", (bg,))
+        cursor.execute("SELECT COUNT(*) FROM donors WHERE blood_group = ? AND is_available = True", (bg,))
         available_supply = cursor.fetchone()[0]
         
         demand_predictions.append({
