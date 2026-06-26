@@ -74,7 +74,7 @@
         <!-- --- MAIN CONTENT --- -->
         <main class="dashboard-content">
             <!-- PAGE HEADERS -->
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap g-3 animate-fade-in">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap g-3 animate-fade-in" id="overview">
                 <div>
                     <h2 class="fw-bold mb-1" id="welcome-title" style="font-family: var(--font-heading);">Welcome Back, John</h2>
                     <p class="text-secondary fs-7 mb-0">Your donor score is in the top 10% this week. Thank you for making a difference!</p>
@@ -171,7 +171,7 @@
             <!-- ACTIVE EMERGENCY ALERTS AND GAMIFICATION -->
             <div class="row g-4 mt-2 animate-fade-in">
                 <!-- ACTIVE PROXIMITY PATIENT ALERTS -->
-                <div class="col-xl-7">
+                <div class="col-xl-7" id="active-alerts">
                     <div class="glass-card p-4 h-100">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h4 class="fw-bold mb-0"><i class="fa-solid fa-circle-radiation text-danger me-2"></i>Active Proximity Requests</h4>
@@ -188,7 +188,7 @@
                 </div>
 
                 <!-- GAMIFIED REWARD BADGES -->
-                <div class="col-xl-5">
+                <div class="col-xl-5" id="rewards-tab">
                     <div class="glass-card p-4 h-100">
                         <h4 class="fw-bold mb-3"><i class="fa-solid fa-award text-danger me-2"></i>Your Achieved Badges</h4>
                         <p class="text-secondary fs-7 mb-4">Complete successful donation requests to unlock achievements and reward cards.</p>
@@ -221,7 +221,7 @@
             </div>
 
             <!-- COMPLETED DONATION HISTORY LIST -->
-            <div class="glass-card p-4 mt-4 animate-fade-in">
+            <div class="glass-card p-4 mt-4 animate-fade-in" id="history-section">
                 <h4 class="fw-bold mb-3"><i class="fa-solid fa-clock-history text-danger me-2"></i>Your Donation History</h4>
                 
                 <div class="table-responsive fs-7">

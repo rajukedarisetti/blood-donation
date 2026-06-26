@@ -77,7 +77,7 @@
         <!-- --- MAIN CONTENT --- -->
         <main class="dashboard-content">
             <!-- PAGE HEADERS -->
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap g-3 animate-fade-in">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap g-3 animate-fade-in" id="overview">
                 <div>
                     <h2 class="fw-bold mb-1" id="welcome-title" style="font-family: var(--font-heading);">Hello, Sarah</h2>
                     <p class="text-secondary fs-7 mb-0">Monitor active emergency match channels or request clinical donor assistance.</p>
@@ -93,7 +93,7 @@
             <!-- OVERVIEW GRID -->
             <div class="row g-4 animate-fade-in">
                 <!-- EMERGENCY REQUEST FORM -->
-                <div class="col-xl-5">
+                <div class="col-xl-5" id="request-blood">
                     <div class="glass-card p-4 h-100" id="request-form-card">
                         <h4 class="fw-bold mb-3"><i class="fa-solid fa-circle-plus text-danger me-2"></i>Create Emergency Request</h4>
                         <p class="text-secondary fs-7 mb-4">LifeLink AI will analyze patient hematology indicators, predict priority levels, and trigger regional alerts.</p>
@@ -212,7 +212,7 @@
             <div class="row g-4 mt-2 animate-fade-in" id="map-recommendations-row">
                 <!-- LEAFLET GEOMETRIC MAP -->
                 <div class="col-xl-6">
-                    <div class="glass-card p-4" id="map-section-card">
+                    <div class="glass-card p-4" id="map-section">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <h4 class="fw-bold mb-0"><i class="fa-solid fa-map-location-dot text-danger me-2"></i>Location Map</h4>
                             
@@ -285,6 +285,17 @@
                     </div>
                 </div>
             </div>
+
+            <!-- --- NOTIFICATIONS SECTION --- -->
+            <div class="glass-card p-4 mt-4 animate-fade-in" id="notifications-tab">
+                <h4 class="fw-bold mb-3"><i class="fa-solid fa-bell text-danger me-2"></i>Notifications Log</h4>
+                <p class="text-secondary fs-7 mb-4">View recent emergency notifications and match responses dispatched to your profile.</p>
+                <div class="d-flex flex-column gap-2" id="patient-notifications-list">
+                    <div class="text-center py-4 text-secondary fs-7">
+                        <i class="fa-solid fa-spinner fa-spin me-2"></i>Loading notifications...
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -331,14 +342,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             protectRoute('patient');
             loadPatientRequests();
-            
-            // Link overrides for navigation smooth scrolling
-            document.querySelectorAll('.sidebar-nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    document.querySelectorAll('.sidebar-nav-link').forEach(l => l.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
+            loadPatientNotifications();
         });
     </script>
 </body>

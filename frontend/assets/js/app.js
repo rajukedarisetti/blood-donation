@@ -132,6 +132,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hook up home page quick search bar
     initHomepageSearch();
+
+    // --- SIDEBAR SMOOTH SCROLLING & ACTIVE SECTION HIGHIGHTING ---
+    const navLinks = document.querySelectorAll('.sidebar-nav-link');
+    if (navLinks.length > 0) {
+        let isScrollingFromClick = false;
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                if (targetId && targetId.startsWith('#') && targetId.length > 1) {
+                    const targetEl = document.querySelector(targetId);
+                    if (targetEl) {
+                        e.preventDefault();
+                        
+                        isScrollingFromClick = true;
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (targetId === '#notifications-tab') {
+                            markNotificationsAsRead();
+                        }
+                        
+                        setTimeout(() => {
+                            isScrollingFromClick = false;
+                        }, 1000);
+                    }
+                }
+            });
+        });
+        
+        const observerOptions = {
+            root: null,
+            rootMargin: '-10% 0px -50% 0px',
+            threshold: 0
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            if (isScrollingFromClick) return;
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    const activeLink = document.querySelector(`.sidebar-nav-link[href="#${id}"]`);
+                    if (activeLink) {
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        activeLink.classList.add('active');
+                        
+                        if (id === 'notifications-tab') {
+                            markNotificationsAsRead();
+                        }
+                    }
+                }
+            });
+        }, observerOptions);
+        
+        navLinks.forEach(link => {
+            const targetId = link.getAttribute('href');
+            if (targetId && targetId.startsWith('#') && targetId.length > 1) {
+                const targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    observer.observe(targetEl);
+                }
+            }
+        });
+    }
 });
 
 // --- PUBLIC LANDING PAGE DYNAMIC HELPERS ---
@@ -1061,6 +1127,84 @@ async function loadDonorHistory() {
         loadAchievementsBadges(user.profile.badges);
     } catch (error) {
         console.error("Load donor history error:", error);
+    }
+}
+
+// --- NOTIFICATIONS MANAGEMENT ---
+
+async function loadPatientNotifications() {
+    const token = getAuthToken();
+    if (!token) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/notifications`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        
+        const container = document.getElementById('patient-notifications-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (!result || result.length === 0) {
+            container.innerHTML = `<div class="text-center py-4 text-secondary fs-7">No notifications found.</div>`;
+            return;
+        }
+        
+        // Update badge count
+        const badge = document.getElementById('notif-badge-count');
+        const unread = result.filter(n => !n.is_read).length;
+        if (badge) {
+            if (unread > 0) {
+                badge.textContent = unread;
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        }
+        
+        result.forEach(n => {
+            let iconClass = 'fa-info-circle text-primary';
+            let bgClass = 'bg-light';
+            if (n.type === 'emergency') {
+                iconClass = 'fa-triangle-exclamation text-danger';
+                bgClass = 'bg-danger-light';
+            } else if (n.type === 'success') {
+                iconClass = 'fa-circle-check text-success';
+                bgClass = 'bg-success-light';
+            }
+            
+            container.innerHTML += `
+                <div class="p-3 border rounded-md d-flex align-items-center gap-3 ${bgClass} mb-2">
+                    <i class="fa-solid ${iconClass} fs-5"></i>
+                    <div>
+                        <strong class="d-block fs-7 text-dark">${n.title}</strong>
+                        <span class="fs-8 text-secondary">${n.message}</span>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error("Load patient notifications error:", error);
+    }
+}
+
+async function markNotificationsAsRead() {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+        await fetch(`${API_BASE}/notifications/read`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const badge = document.getElementById('notif-badge-count');
+        if (badge) {
+            badge.classList.add('d-none');
+            badge.textContent = '0';
+        }
+    } catch (error) {
+        console.error("Failed to mark notifications read:", error);
     }
 }
 
