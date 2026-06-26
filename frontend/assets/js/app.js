@@ -216,14 +216,9 @@ if (loginForm) {
             const result = await response.json();
             if (result.status === 'success') {
                 saveSession(result.token, result.user);
-                showToast("Login Successful", `Welcome back to LifeLink, ${result.user.name}!`, "success");
-                
-                // Route to appropriate dashboard
-                setTimeout(() => {
-                    if (result.user.role === 'donor') window.location.href = 'donor.html';
-                    else if (result.user.role === 'patient') window.location.href = 'patient.html';
-                    else if (result.user.role === 'admin') window.location.href = 'admin.html';
-                }, 1000);
+                if (result.user.role === 'donor') window.location.href = 'donor.html';
+                else if (result.user.role === 'patient') window.location.href = 'patient.html';
+                else if (result.user.role === 'admin') window.location.href = 'admin.html';
             } else {
                 showToast("Authentication Failed", result.message, "warning");
             }
