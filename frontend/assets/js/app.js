@@ -803,7 +803,7 @@ function filterMapMarkersByRadius(radiusLimit) {
     } else if (facilitiesMarkersLayer) {
         patientMap.removeLayer(facilitiesMarkersLayer);
     }
-}}
+}
 
 // --- DONOR PORTAL INTERACTIVITIES ---
 
