@@ -3,11 +3,22 @@
    Handles State, JWT Auth, Maps, Charts, Chatbot & Voice Search
    ======================================================== */
 
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000' && window.location.port !== ''
-    ? 'http://localhost:5000/api'
-    : window.location.protocol === 'file:'
-        ? 'http://localhost:5000/api'
-        : '/api';
+const isLocal = () => {
+    const hn = window.location.hostname;
+    return (
+        hn === 'localhost' || 
+        hn === '127.0.0.1' || 
+        hn === '[::1]' ||
+        hn.startsWith('192.168.') || 
+        hn.startsWith('10.') || 
+        hn.startsWith('172.') || 
+        hn.endsWith('.local')
+    );
+};
+
+const API_BASE = isLocal()
+    ? (window.location.port === '5000' ? '/api' : `http://${window.location.hostname}:5000/api`)
+    : (window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api');
 
 // --- SESSION & STATE STATE HELPERS ---
 function getAuthToken() {
@@ -331,10 +342,7 @@ if (registerForm) {
             const result = await response.json();
             
             if (result.status === 'success') {
-                showToast("Account Created", "Registration completed! Redirecting to login portal.", "success");
-                setTimeout(() => {
-                    window.location.href = `login.html?role=${role}`;
-                }, 1500);
+                window.location.href = `login.html?role=${role}`;
             } else {
                 showToast("Registration Error", result.message, "warning");
             }
