@@ -996,6 +996,81 @@ def accept_donation_request(current_user, req_id):
         }
     })
 
+@app.route('/api/donor/voluntary-donate', methods=['POST'])
+@token_required
+def voluntary_donation(current_user):
+    if current_user['role'] != 'donor':
+        return jsonify({'status': 'error', 'message': 'Only registered donors can log voluntary donations!'}), 403
+        
+    data = request.get_json() or {}
+    hospital_name = data.get('hospital_name', 'Voluntary Donation Center')
+    units = int(data.get('units', 1))
+    donation_date = data.get('donation_date') or datetime.now().strftime('%Y-%m-%d')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT id, name, total_donations, badges, response_speed_history FROM donors WHERE user_id = ?", (current_user['id'],))
+    donor = cursor.fetchone()
+    if not donor:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Donor profile not found!'}), 404
+        
+    donor_id = donor['id']
+    donor_name = donor['name']
+    
+    # Generate unique certificate code
+    cert_code = f"LL-VOL-{random.randint(100000, 999999)}"
+    
+    # Insert in donation history
+    cursor.execute(
+        """INSERT INTO donation_history (donor_id, request_id, units, donation_date, status, certificate_code)
+           VALUES (?, NULL, ?, ?, 'Completed', ?)""",
+        (donor_id, units, donation_date, cert_code)
+    )
+    
+    new_total = donor['total_donations'] + 1
+    
+    # Update gamification badges
+    badges_list = json.loads(donor['badges']) if donor['badges'] else []
+    if new_total >= 1 and "newbie" not in badges_list:
+        badges_list.append("newbie")
+    if new_total >= 5 and "lifesaver" not in badges_list:
+        badges_list.append("lifesaver")
+    if new_total >= 10 and "champion" not in badges_list:
+        badges_list.append("champion")
+        
+    new_speed = donor['response_speed_history']
+    new_ai_score = min(99.0, float(70.0 + (new_total * 3.0)))
+    
+    cursor.execute(
+        """UPDATE donors 
+           SET total_donations = ?, last_donation_date = ?, badges = ?, ai_donor_score = ?
+           WHERE id = ?""",
+        (new_total, donation_date, json.dumps(badges_list), new_ai_score, donor_id)
+    )
+    
+    # Notification
+    cursor.execute(
+        "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
+        (current_user['id'], 'Voluntary Donation Logged!',
+         f'Thank you, {donor_name}! You successfully logged a voluntary donation of {units} units. Download your official LifeLink certificate now.',
+         'success')
+    )
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+        'status': 'success',
+        'message': 'Voluntary donation successfully recorded!',
+        'data': {
+            'certificate_code': cert_code,
+            'badges': badges_list,
+            'ai_score': new_ai_score
+        }
+    })
+
 @app.route('/api/donor/history', methods=['GET'])
 @token_required
 def get_donor_history(current_user):

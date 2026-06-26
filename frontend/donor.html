@@ -166,6 +166,43 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- LOG VOLUNTARY DONATION -->
+                <div class="col-lg-6">
+                    <div class="glass-card p-4 h-100">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-square-plus text-danger me-2"></i>Log Voluntary Donation</h5>
+                        <p class="text-secondary fs-7 mb-3">Record a voluntary blood donation at any accredited hospital or blood bank to request your certificate.</p>
+                        
+                        <form id="voluntary-donation-form">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Select Donation Center</label>
+                                <select class="form-select" id="vol-hospital" required>
+                                    <option value="" disabled selected>Loading accredited facilities...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3 d-none" id="custom-hospital-input-group">
+                                <label class="form-label fw-bold">Accredited Center Name (Custom)</label>
+                                <input type="text" class="form-control" id="vol-custom-hospital" placeholder="Enter blood bank or hospital name">
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">Units Donated</label>
+                                    <input type="number" min="1" max="5" class="form-control" id="vol-units" value="1" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">Donation Date</label>
+                                    <input type="date" class="form-control" id="vol-date" required>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-premium w-100 fw-bold mt-2">
+                                <i class="fa-solid fa-file-invoice text-white me-2"></i>Log Voluntary Donation
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             <!-- ACTIVE EMERGENCY ALERTS AND GAMIFICATION -->

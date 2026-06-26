@@ -198,6 +198,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Initialize Voluntary Donation elements if on donor.html
+    const volForm = document.getElementById('voluntary-donation-form');
+    if (volForm) {
+        const dateInput = document.getElementById('vol-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        populateVoluntaryHospitals();
+        setupVoluntaryDonationSubmission();
+    }
 });
 
 // --- PUBLIC LANDING PAGE DYNAMIC HELPERS ---
@@ -1670,3 +1681,112 @@ const ai_models = {
         return 0;
     }
 };
+
+// --- VOLUNTARY DONATION ENGINE ---
+
+async function populateVoluntaryHospitals() {
+    const select = document.getElementById('vol-hospital');
+    const customGroup = document.getElementById('custom-hospital-input-group');
+    const customInput = document.getElementById('vol-custom-hospital');
+    if (!select) return;
+    
+    select.addEventListener('change', (e) => {
+        if (e.target.value === 'custom') {
+            customGroup.classList.remove('d-none');
+            customInput.required = true;
+        } else {
+            customGroup.classList.add('d-none');
+            customInput.required = false;
+            customInput.value = '';
+        }
+    });
+
+    try {
+        const response = await fetch(`${API_BASE}/hospitals`);
+        const result = await response.json();
+        
+        select.innerHTML = '<option value="" disabled selected>Select accredited center...</option>';
+        
+        if (result.status === 'success' && result.data.length > 0) {
+            result.data.forEach(h => {
+                select.innerHTML += `<option value="${h.name}">${h.name} (${h.type})</option>`;
+            });
+        }
+        
+        select.innerHTML += '<option value="custom">Other / Custom Center...</option>';
+    } catch (error) {
+        console.error("Failed to load voluntary hospitals:", error);
+        select.innerHTML = '<option value="custom">Other / Custom Center...</option>';
+        customGroup.classList.remove('d-none');
+        customInput.required = true;
+    }
+}
+
+function setupVoluntaryDonationSubmission() {
+    const form = document.getElementById('voluntary-donation-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const token = getAuthToken();
+        if (!token) return;
+        
+        const select = document.getElementById('vol-hospital');
+        const customInput = document.getElementById('vol-custom-hospital');
+        const unitsInput = document.getElementById('vol-units');
+        const dateInput = document.getElementById('vol-date');
+        
+        let hospitalName = select.value;
+        if (hospitalName === 'custom') {
+            hospitalName = customInput.value.trim();
+        }
+        
+        const units = parseInt(unitsInput.value);
+        const donation_date = dateInput.value;
+        
+        showToast("Fulfilling Donation", "Logging voluntary transaction and generating certificate...", "info");
+        
+        try {
+            const response = await fetch(`${API_BASE}/donor/voluntary-donate`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    hospital_name: hospitalName,
+                    units: units,
+                    donation_date: donation_date
+                })
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                showToast("Donation Recorded!", result.message, "success");
+                
+                form.reset();
+                select.value = '';
+                customInput.value = '';
+                document.getElementById('custom-hospital-input-group').classList.add('d-none');
+                customInput.required = false;
+                if (dateInput) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+                
+                loadDonorAlerts();
+                loadDonorHistory();
+                fetchDonorUpdatedProfile(token);
+                
+                setTimeout(() => {
+                    triggerDonationCertificateModal(result.data.certificate_code);
+                }, 1200);
+            } else {
+                showToast("Transaction Failed", result.message, "warning");
+            }
+        } catch (error) {
+            console.error("Voluntary donation submit error:", error);
+            showToast("Connection Error", "Could not connect to Flask API server.", "warning");
+        }
+    });
+}
