@@ -62,16 +62,25 @@ class PgCursor:
     """Wraps psycopg2 RealDictCursor to behave like sqlite3.Row cursor."""
     def __init__(self, cursor):
         self._cur = cursor
+        self._lastrowid = None
 
     def execute(self, sql, params=None):
-        sql = _to_pg(sql)
-        self._cur.execute(sql, params or ())
+        pg_sql = _to_pg(sql)
+        # For INSERT statements, append RETURNING id to capture last inserted ID
+        sql_upper = pg_sql.strip().upper()
+        if sql_upper.startswith('INSERT') and 'RETURNING' not in sql_upper:
+            pg_sql = pg_sql.rstrip().rstrip(';') + ' RETURNING id'
+            self._cur.execute(pg_sql, params or ())
+            row = self._cur.fetchone()
+            self._lastrowid = row['id'] if row else None
+        else:
+            self._cur.execute(pg_sql, params or ())
         return self
 
     def executemany(self, sql, seq):
-        sql = _to_pg(sql)
+        pg_sql = _to_pg(sql)
         for params in seq:
-            self._cur.execute(sql, params)
+            self._cur.execute(pg_sql, params)
 
     def fetchone(self):
         row = self._cur.fetchone()
@@ -85,7 +94,7 @@ class PgCursor:
 
     @property
     def lastrowid(self):
-        return self._cur.fetchone()[0] if self._cur.description else None
+        return self._lastrowid
 
     def close(self):
         self._cur.close()
