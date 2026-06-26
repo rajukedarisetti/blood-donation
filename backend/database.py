@@ -6,10 +6,18 @@ from werkzeug.security import generate_password_hash
 
 # ============================================================
 # DATABASE MODE DETECTION
-# If DATABASE_URL is set → use PostgreSQL (Supabase / Vercel)
-# Otherwise             → use local SQLite (development)
+# Priority: DATABASE_URL → POSTGRES_URL_NON_POOLING → POSTGRES_URL
+# Strip whitespace/newlines to fix PowerShell piping issues
 # ============================================================
-DATABASE_URL = os.environ.get('DATABASE_URL')
+def _clean_url(val):
+    """Strip whitespace and newlines that PowerShell echo may inject."""
+    return val.strip() if val else None
+
+DATABASE_URL = (
+    _clean_url(os.environ.get('DATABASE_URL')) or
+    _clean_url(os.environ.get('POSTGRES_URL_NON_POOLING')) or
+    _clean_url(os.environ.get('POSTGRES_URL'))
+)
 IS_POSTGRES  = bool(DATABASE_URL)
 IS_VERCEL    = os.environ.get('VERCEL') == '1'
 

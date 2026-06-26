@@ -136,12 +136,27 @@ def system_status():
         'status': 'healthy',
         'app': 'LifeLink API Server',
         'timestamp': datetime.now().isoformat(),
+        'database': 'PostgreSQL (Supabase)' if IS_POSTGRES else 'SQLite (local)',
         'ai_models': {
             'availability_predictor': ai_models._availability_data is not None or 'loaded (fallback available)',
             'demand_forecaster': ai_models._demand_data is not None or 'loaded (fallback available)',
             'priority_classifier': ai_models._priority_data is not None or 'loaded (fallback available)'
         }
     })
+
+@app.route('/api/setup-db', methods=['GET'])
+def setup_db():
+    """One-time endpoint to create tables and seed data in Supabase."""
+    try:
+        from database import init_db, IS_POSTGRES
+        init_db()
+        return jsonify({
+            'status': 'success',
+            'message': 'Database tables created and seeded successfully!',
+            'database': 'PostgreSQL (Supabase)' if IS_POSTGRES else 'SQLite (local)'
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/public/stats', methods=['GET'])
 def get_public_stats():
