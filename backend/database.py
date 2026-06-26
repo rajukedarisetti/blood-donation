@@ -6,17 +6,20 @@ from werkzeug.security import generate_password_hash
 
 # ============================================================
 # DATABASE MODE DETECTION
-# Priority: DATABASE_URL → POSTGRES_URL_NON_POOLING → POSTGRES_URL
-# Strip whitespace/newlines to fix PowerShell piping issues
+# Priority order (Vercel-safe, IPv4 pooler first):
+#   1. POSTGRES_URL           → Vercel Supabase integration pooler (IPv4, port 6543)
+#   2. POSTGRES_PRISMA_URL    → Session pooler fallback
+#   3. DATABASE_URL           → Custom URL (may be IPv6 direct — last resort)
+# Local dev: falls back to SQLite
 # ============================================================
 def _clean_url(val):
-    """Strip whitespace and newlines that PowerShell echo may inject."""
+    """Strip whitespace/newlines injected by PowerShell piping."""
     return val.strip() if val else None
 
 DATABASE_URL = (
-    _clean_url(os.environ.get('DATABASE_URL')) or
-    _clean_url(os.environ.get('POSTGRES_URL_NON_POOLING')) or
-    _clean_url(os.environ.get('POSTGRES_URL'))
+    _clean_url(os.environ.get('POSTGRES_URL')) or
+    _clean_url(os.environ.get('POSTGRES_PRISMA_URL')) or
+    _clean_url(os.environ.get('DATABASE_URL'))
 )
 IS_POSTGRES  = bool(DATABASE_URL)
 IS_VERCEL    = os.environ.get('VERCEL') == '1'
