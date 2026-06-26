@@ -5,10 +5,12 @@
 
 const isLocal = () => {
     const hn = window.location.hostname;
+    if (!hn) return false;
     return (
         hn === 'localhost' || 
         hn === '127.0.0.1' || 
         hn === '[::1]' ||
+        hn.indexOf('.') === -1 || 
         hn.startsWith('192.168.') || 
         hn.startsWith('10.') || 
         hn.startsWith('172.') || 
@@ -18,7 +20,7 @@ const isLocal = () => {
 
 const API_BASE = isLocal()
     ? (window.location.port === '5000' ? '/api' : `http://${window.location.hostname}:5000/api`)
-    : (window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api');
+    : (window.location.protocol === 'file:' ? 'http://127.0.0.1:5000/api' : '/api');
 
 // --- SESSION & STATE STATE HELPERS ---
 function getAuthToken() {
