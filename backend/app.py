@@ -165,18 +165,18 @@ def get_public_stats():
     try:
         # Donors count
         cursor.execute("SELECT COUNT(*) FROM donors")
-        donors_count = cursor.fetchone()[0]
+        donors_count = cursor.fetchone()[0] or 0
         
-        # Completed donations units count
-        cursor.execute("SELECT SUM(units) FROM donation_history")
-        completed_donations = cursor.fetchone()[0] or 0
+        # Completed donations count
+        cursor.execute("SELECT COUNT(*) FROM donation_history WHERE status = 'Completed'")
+        completed_matches = cursor.fetchone()[0] or 0
         
         # Unique hospitals count
-        cursor.execute("SELECT COUNT(DISTINCT hospital_name) FROM blood_requests")
+        cursor.execute("SELECT COUNT(*) FROM hospitals_and_banks")
         hospitals_count = cursor.fetchone()[0] or 0
     except Exception:
         donors_count = 0
-        completed_donations = 0
+        completed_matches = 0
         hospitals_count = 0
     finally:
         conn.close()
@@ -184,10 +184,10 @@ def get_public_stats():
     return jsonify({
         'status': 'success',
         'data': {
-            'donors': donors_count + 1480,
-            'completed': completed_donations + 4290,
-            'hospitals': max(82, hospitals_count + 79),
-            'lives_saved': (completed_donations + 4290) * 3
+            'donors': donors_count,
+            'completed': completed_matches,
+            'hospitals': hospitals_count,
+            'lives_saved': completed_matches * 3
         }
     })
 
