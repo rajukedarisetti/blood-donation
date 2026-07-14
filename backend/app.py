@@ -285,6 +285,11 @@ def login():
         conn.close()
         return jsonify({'status': 'error', 'message': 'Invalid email or password!'}), 401
 
+    req_role = data.get('role')
+    if req_role and user['role'] != req_role:
+        conn.close()
+        return jsonify({'status': 'error', 'message': f"This account is registered as a {user['role'].capitalize()}, not a {req_role.capitalize()}!"}), 400
+
     user_id = user['id']
     role = user['role']
     name = email.split('@')[0].replace('.', ' ').title()
