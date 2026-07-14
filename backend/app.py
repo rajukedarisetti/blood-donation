@@ -195,6 +195,8 @@ def get_public_stats():
 def register():
     data = request.get_json() or {}
     email = data.get('email')
+    if email:
+        email = email.strip().lower()
     password = data.get('password')
     role = data.get('role') # 'donor', 'patient', 'admin'
     name = data.get('name')
@@ -267,6 +269,8 @@ def register():
 def login():
     data = request.get_json() or {}
     email = data.get('email')
+    if email:
+        email = email.strip().lower()
     password = data.get('password')
 
     if not email or not password:
@@ -337,6 +341,8 @@ def login():
 def forgot_password():
     data = request.get_json() or {}
     email = data.get('email')
+    if email:
+        email = email.strip().lower()
 
     if not email:
         return jsonify({'status': 'error', 'message': 'Email is required!'}), 400
@@ -379,6 +385,8 @@ def forgot_password():
 def reset_password():
     data = request.get_json() or {}
     email = data.get('email')
+    if email:
+        email = email.strip().lower()
     otp = data.get('otp')
     new_password = data.get('new_password')
 
