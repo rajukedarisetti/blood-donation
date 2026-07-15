@@ -1222,13 +1222,21 @@ def get_admin_analytics(current_user):
             'shortage_status': 'Critical' if (pred_units > available_supply * 2 and bg in ['O-', 'A-', 'B-']) else ('Moderate' if pred_units > available_supply else 'Normal')
         })
         
-    # 3. Fraud alerts
-    cursor.execute("""
-        SELECT patient_id, COUNT(*) as request_count, MAX(created_at) as last_time
-        FROM blood_requests 
-        GROUP BY patient_id, DATE(created_at)
-        HAVING request_count > 2
-    """)
+    # 3. Fraud alerts — use COUNT(*) > 2 directly in HAVING (alias not allowed in PostgreSQL)
+    if IS_POSTGRES:
+        cursor.execute("""
+            SELECT patient_id, COUNT(*) as request_count, MAX(created_at) as last_time
+            FROM blood_requests 
+            GROUP BY patient_id, created_at::date
+            HAVING COUNT(*) > 2
+        """)
+    else:
+        cursor.execute("""
+            SELECT patient_id, COUNT(*) as request_count, MAX(created_at) as last_time
+            FROM blood_requests 
+            GROUP BY patient_id, DATE(created_at)
+            HAVING COUNT(*) > 2
+        """)
     fraud_warnings = [dict(row) for row in cursor.fetchall()]
     
     # 4. Grids
@@ -1323,16 +1331,27 @@ def get_admin_dashboard(current_user):
             "forecasted_units_needed": int(pred_units)
         }
         
-    # fraud alerts (overlapping within 2 hours)
-    cursor.execute("""
-        SELECT p.name, u.email, p.phone, COUNT(*) as request_count
-        FROM blood_requests br
-        JOIN patients p ON br.patient_id = p.user_id
-        JOIN users u ON p.user_id = u.id
-        WHERE br.created_at >= datetime('now', '-2 hours')
-        GROUP BY br.patient_id
-        HAVING request_count > 2
-    """)
+    # fraud alerts — use COUNT(*) directly in HAVING; use db-appropriate date math
+    if IS_POSTGRES:
+        cursor.execute("""
+            SELECT p.name, u.email, p.phone, COUNT(*) as request_count
+            FROM blood_requests br
+            JOIN patients p ON br.patient_id = p.user_id
+            JOIN users u ON p.user_id = u.id
+            WHERE br.created_at >= NOW() - INTERVAL '2 hours'
+            GROUP BY br.patient_id, p.name, u.email, p.phone
+            HAVING COUNT(*) > 2
+        """)
+    else:
+        cursor.execute("""
+            SELECT p.name, u.email, p.phone, COUNT(*) as request_count
+            FROM blood_requests br
+            JOIN patients p ON br.patient_id = p.user_id
+            JOIN users u ON p.user_id = u.id
+            WHERE br.created_at >= datetime('now', '-2 hours')
+            GROUP BY br.patient_id
+            HAVING COUNT(*) > 2
+        """)
     fraud_alerts = [dict(row) for row in cursor.fetchall()]
     
     # active requests
