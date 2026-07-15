@@ -648,7 +648,7 @@ def create_blood_request(current_user):
     request_id = cursor.lastrowid
     
     # Trigger notifications
-    cursor.execute("SELECT * FROM donors WHERE is_available = True")
+    cursor.execute("SELECT * FROM donors WHERE is_available = 1")
     donors = cursor.fetchall()
     count_alerted = 0
     for donor in donors:
@@ -1177,7 +1177,7 @@ def get_admin_analytics(current_user):
     cursor.execute("SELECT COUNT(*) FROM donors")
     total_donors = cursor.fetchone()[0]
     
-    cursor.execute("SELECT COUNT(*) FROM donors WHERE is_available = True")
+    cursor.execute("SELECT COUNT(*) FROM donors WHERE is_available = 1")
     available_donors = cursor.fetchone()[0]
     
     cursor.execute("SELECT COUNT(*) FROM blood_requests")

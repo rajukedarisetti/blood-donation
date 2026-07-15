@@ -128,11 +128,34 @@
                 <div id="patient-specific-fields" class="mb-4 border-top pt-3 d-none">
                     <h5 class="fw-bold mb-3 text-danger"><i class="fa-solid fa-circle-chevron-right me-1"></i>Patient/Hospital Info</h5>
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="register-hospital" class="form-label fw-bold">Primary Hospital Name</label>
-                            <input type="text" class="form-control" id="register-hospital" placeholder="City General Hospital">
+                        <!-- Location-based hospital selector -->
+                        <div class="col-12">
+                            <label for="register-hospital-select" class="form-label fw-bold">
+                                <i class="fa-solid fa-hospital me-1 text-danger"></i>Primary Hospital / Blood Bank
+                            </label>
+                            <!-- Status hint -->
+                            <div id="hospital-location-hint" class="alert alert-info py-2 px-3 fs-8 mb-2 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-circle-info fs-6 text-info"></i>
+                                <span>Set your <strong>location coordinates</strong> above first, then nearby hospitals will appear here automatically.</span>
+                            </div>
+                            <!-- Dropdown -->
+                            <select class="form-select" id="register-hospital-select" disabled>
+                                <option value="" disabled selected>📍 Enter coordinates above to see nearby facilities...</option>
+                            </select>
+                            <!-- Status feedback message -->
+                            <div id="hospital-fetch-status" class="form-text fs-8 text-muted mt-1">
+                                <i class="fa-solid fa-circle-info me-1"></i>Nearby hospitals will be loaded when you set your location.
+                            </div>
+                            <!-- Custom name fallback group (hidden by default) -->
+                            <div id="register-hospital-custom-group" class="mt-2 d-none">
+                                <input type="text" class="form-control" id="register-hospital-custom"
+                                    placeholder="Type your hospital or blood bank name...">
+                                <div class="form-text fs-8 text-muted">Enter the exact name of your hospital or blood bank.</div>
+                            </div>
+                            <!-- Legacy hidden input for backward compatibility -->
+                            <input type="hidden" id="register-hospital" value="">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="register-condition" class="form-label fw-bold">Medical Condition</label>
                             <input type="text" class="form-control" id="register-condition" placeholder="e.g. Surgery Support, Leukemia">
                         </div>
@@ -182,20 +205,39 @@
                 patientFields.classList.remove('d-none');
                 patientTab.classList.add('active');
                 donorTab.classList.remove('active');
+                
+                // If coordinates are already filled, trigger hospital lookup immediately
+                const lat = parseFloat(document.getElementById('register-latitude').value);
+                const lon = parseFloat(document.getElementById('register-longitude').value);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    triggerHospitalFetchIfPatient(lat, lon);
+                }
             }
+        }
+
+        function triggerHospitalFetchIfPatient(lat, lon) {
+            const role = document.getElementById('register-role').value;
+            if (role !== 'patient') return;
+            const hint = document.getElementById('hospital-location-hint');
+            if (hint) hint.classList.add('d-none');
+            fetchNearbyHospitalsForRegistration(lat, lon);
         }
         
         // Automated Geolocation API handler
         document.getElementById('locate-me-btn').addEventListener('click', () => {
             if (navigator.geolocation) {
-                // Show floating warning toast
                 showToast("Requesting Location", "Attempting to retrieve browser coordinates...", "info");
                 
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        document.getElementById('register-latitude').value = position.coords.latitude;
-                        document.getElementById('register-longitude').value = position.coords.longitude;
-                        showToast("Location Found!", `Coordinates updated to: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, "success");
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        document.getElementById('register-latitude').value = lat;
+                        document.getElementById('register-longitude').value = lon;
+                        showToast("Location Found!", `Coordinates updated to: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, "success");
+                        
+                        // Auto-load nearby hospitals if patient role is selected
+                        triggerHospitalFetchIfPatient(lat, lon);
                     },
                     (error) => {
                         console.error("Geolocation error:", error);
@@ -206,6 +248,23 @@
                 showToast("Not Supported", "Your browser does not support standard geolocation APIs.", "warning");
             }
         });
+
+        // Also trigger hospital fetch when user manually edits coordinates
+        let coordDebounceTimer = null;
+        function onCoordChange() {
+            clearTimeout(coordDebounceTimer);
+            coordDebounceTimer = setTimeout(() => {
+                const lat = parseFloat(document.getElementById('register-latitude').value);
+                const lon = parseFloat(document.getElementById('register-longitude').value);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    triggerHospitalFetchIfPatient(lat, lon);
+                }
+            }, 800);
+        }
+
+        document.getElementById('register-latitude').addEventListener('input', onCoordChange);
+        document.getElementById('register-longitude').addEventListener('input', onCoordChange);
     </script>
 </body>
 </html>
+

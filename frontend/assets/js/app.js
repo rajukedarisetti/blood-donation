@@ -403,7 +403,21 @@ if (registerForm) {
             const isAvail = document.getElementById('register-available').checked;
             payload.is_available = isAvail ? 1 : 0;
         } else {
-            payload.hospital_name = document.getElementById('register-hospital').value;
+            // Handle new location-based hospital dropdown + custom fallback
+            const hospitalSelect = document.getElementById('register-hospital-select');
+            const hospitalCustomInput = document.getElementById('register-hospital-custom');
+            const hospitalTextInput = document.getElementById('register-hospital');
+            
+            if (hospitalSelect && hospitalSelect.value) {
+                const selectedVal = hospitalSelect.value;
+                if (selectedVal === 'custom') {
+                    payload.hospital_name = hospitalCustomInput ? hospitalCustomInput.value.trim() : '';
+                } else {
+                    payload.hospital_name = selectedVal;
+                }
+            } else if (hospitalTextInput) {
+                payload.hospital_name = hospitalTextInput.value;
+            }
             payload.medical_condition = document.getElementById('register-condition').value;
         }
         
@@ -425,6 +439,101 @@ if (registerForm) {
             showToast("Connection Error", "Failed to communicate with Flask server.", "warning");
         }
     });
+}
+
+// --- LOCATION-BASED HOSPITAL REGISTRATION HELPER ---
+
+async function fetchNearbyHospitalsForRegistration(lat, lon) {
+    const select = document.getElementById('register-hospital-select');
+    const statusEl = document.getElementById('hospital-fetch-status');
+    const customGroup = document.getElementById('register-hospital-custom-group');
+    const customInput = document.getElementById('register-hospital-custom');
+    if (!select) return;
+
+    select.disabled = true;
+    select.innerHTML = '<option value="">\uD83D\uDD04 Loading nearby hospitals...</option>';
+    if (statusEl) {
+        statusEl.className = 'form-text fs-8 text-info mt-1';
+        statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Searching hospitals within 50km of your location...';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/hospitals?latitude=${lat}&longitude=${lon}&max_distance=50`);
+        const result = await response.json();
+
+        select.innerHTML = '<option value="" disabled selected>Select a nearby hospital or blood bank...</option>';
+
+        if (result.status === 'success' && result.data && result.data.length > 0) {
+            const hospitals = result.data.filter(h => h.type === 'Hospital');
+            const bloodBanks = result.data.filter(h => h.type === 'Blood Bank');
+
+            if (hospitals.length > 0) {
+                const grp1 = document.createElement('optgroup');
+                grp1.label = '\uD83C\uDFE5 Hospitals';
+                hospitals.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.name;
+                    opt.textContent = `${h.name}  \u2014  ${h.distance_km} km away`;
+                    grp1.appendChild(opt);
+                });
+                select.appendChild(grp1);
+            }
+
+            if (bloodBanks.length > 0) {
+                const grp2 = document.createElement('optgroup');
+                grp2.label = '\uD83E\uDE78 Blood Banks';
+                bloodBanks.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.name;
+                    opt.textContent = `${h.name}  \u2014  ${h.distance_km} km away`;
+                    grp2.appendChild(opt);
+                });
+                select.appendChild(grp2);
+            }
+
+            const customOpt = document.createElement('option');
+            customOpt.value = 'custom';
+            customOpt.textContent = '\u270F\uFE0F Other / Enter hospital name manually...';
+            select.appendChild(customOpt);
+
+            if (statusEl) {
+                statusEl.className = 'form-text fs-8 text-success mt-1';
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>Found <strong>${result.data.length}</strong> facility(s) near your location, sorted by distance.`;
+            }
+        } else {
+            select.innerHTML = '<option value="custom">\u270F\uFE0F No registered facilities found nearby \u2014 enter name manually</option>';
+            if (customGroup) customGroup.classList.remove('d-none');
+            if (customInput) customInput.required = true;
+            if (statusEl) {
+                statusEl.className = 'form-text fs-8 text-warning mt-1';
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>No registered facilities within 50km. Enter the hospital name below.';
+            }
+        }
+
+        select.disabled = false;
+
+        // Handle "Other" toggle
+        select.addEventListener('change', () => {
+            if (select.value === 'custom') {
+                if (customGroup) customGroup.classList.remove('d-none');
+                if (customInput) customInput.required = true;
+            } else {
+                if (customGroup) customGroup.classList.add('d-none');
+                if (customInput) { customInput.required = false; customInput.value = ''; }
+            }
+        });
+
+    } catch (error) {
+        console.error("Failed to fetch nearby hospitals:", error);
+        select.innerHTML = '<option value="custom">\u270F\uFE0F Could not load hospitals \u2014 enter manually</option>';
+        select.disabled = false;
+        if (customGroup) customGroup.classList.remove('d-none');
+        if (customInput) customInput.required = true;
+        if (statusEl) {
+            statusEl.className = 'form-text fs-8 text-danger mt-1';
+            statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i>Failed to load hospitals. Please enter manually.';
+        }
+    }
 }
 
 // --- PATIENT PORTAL INTERACTIVITIES ---
@@ -1289,6 +1398,10 @@ let adminForecastChart = null;
 async function loadAdminAnalytics() {
     const token = getAuthToken();
     if (!token) return;
+
+    // Show loading spinners in tables while fetching
+    const usersTbody = document.getElementById('admin-users-table-body');
+    const reqsTbody = document.getElementById('admin-requests-table-body');
     
     try {
         const response = await fetch(`${API_BASE}/admin/analytics`, {
@@ -1296,7 +1409,13 @@ async function loadAdminAnalytics() {
         });
         const result = await response.json();
         
-        if (result.status !== 'success') return;
+        if (result.status !== 'success') {
+            const errMsg = result.message || 'Unknown error from server.';
+            showToast('Admin Dashboard Error', errMsg, 'warning');
+            if (usersTbody) usersTbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger"><i class="fa-solid fa-circle-xmark me-2"></i>${errMsg}</td></tr>`;
+            if (reqsTbody) reqsTbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger"><i class="fa-solid fa-circle-xmark me-2"></i>Could not load requests.</td></tr>`;
+            return;
+        }
         
         const data = result.data;
         
@@ -1394,6 +1513,11 @@ async function loadAdminAnalytics() {
         
     } catch (error) {
         console.error("Load admin analytics error:", error);
+        showToast("Connection Error", "Could not connect to the Flask API server. Ensure it is running.", "warning");
+        const usersTbodyErr = document.getElementById('admin-users-table-body');
+        const reqsTbodyErr = document.getElementById('admin-requests-table-body');
+        if (usersTbodyErr) usersTbodyErr.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger"><i class="fa-solid fa-wifi me-2"></i>Connection failed. Is the server running?</td></tr>`;
+        if (reqsTbodyErr) reqsTbodyErr.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger"><i class="fa-solid fa-wifi me-2"></i>Connection failed.</td></tr>`;
     }
 }
 
