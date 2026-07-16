@@ -1929,16 +1929,73 @@ async function populateVoluntaryHospitals() {
         }
     });
 
+    const user = getLoggedUser();
+    let lat = null, lon = null;
+    if (user && user.profile) {
+        lat = user.profile.latitude;
+        lon = user.profile.longitude;
+    }
+
     try {
-        const response = await fetch(`${API_BASE}/hospitals`);
+        select.innerHTML = '<option value="" disabled selected>🔄 Locating nearby centers...</option>';
+        
+        // Use donor's coordinates if available to fetch live OSM data
+        let url = `${API_BASE}/hospitals`;
+        if (lat && lon) {
+            url += `?latitude=${lat}&longitude=${lon}&max_distance=50`;
+        }
+        
+        const response = await fetch(url);
         const result = await response.json();
         
         select.innerHTML = '<option value="" disabled selected>Select accredited center...</option>';
         
-        if (result.status === 'success' && result.data.length > 0) {
-            result.data.forEach(h => {
-                select.innerHTML += `<option value="${h.name}">${h.name} (${h.type})</option>`;
-            });
+        if (result.status === 'success' && result.data && result.data.length > 0) {
+            const hospitals  = result.data.filter(h => h.type === 'Hospital');
+            const bloodBanks = result.data.filter(h => h.type === 'Blood Bank');
+            const clinics    = result.data.filter(h => h.type === 'Clinic');
+
+            if (hospitals.length > 0) {
+                const grp1 = document.createElement('optgroup');
+                grp1.label = '🏥 Hospitals';
+                hospitals.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.name;
+                    const srcTag = h.source === 'OpenStreetMap' ? ' 🗺️' : '';
+                    const distTag = h.distance_km ? `  —  ${h.distance_km} km away` : '';
+                    opt.textContent = `${h.name}${srcTag}${distTag}`;
+                    grp1.appendChild(opt);
+                });
+                select.appendChild(grp1);
+            }
+
+            if (bloodBanks.length > 0) {
+                const grp2 = document.createElement('optgroup');
+                grp2.label = '🩸 Blood Banks';
+                bloodBanks.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.name;
+                    const srcTag = h.source === 'OpenStreetMap' ? ' 🗺️' : '';
+                    const distTag = h.distance_km ? `  —  ${h.distance_km} km away` : '';
+                    opt.textContent = `${h.name}${srcTag}${distTag}`;
+                    grp2.appendChild(opt);
+                });
+                select.appendChild(grp2);
+            }
+
+            if (clinics.length > 0) {
+                const grp3 = document.createElement('optgroup');
+                grp3.label = '🏨 Clinics';
+                clinics.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.name;
+                    const srcTag = h.source === 'OpenStreetMap' ? ' 🗺️' : '';
+                    const distTag = h.distance_km ? `  —  ${h.distance_km} km away` : '';
+                    opt.textContent = `${h.name}${srcTag}${distTag}`;
+                    grp3.appendChild(opt);
+                });
+                select.appendChild(grp3);
+            }
         }
         
         select.innerHTML += '<option value="custom">Other / Custom Center...</option>';
