@@ -20,85 +20,109 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+<body class="bg-light">
 
-    <div class="container animate-fade-in my-5" style="max-width: 480px;">
-        <!-- Brand Link -->
-        <div class="text-center mb-4">
-            <a class="d-inline-flex align-items-center gap-2 text-decoration-none fs-2 fw-bold text-dark" href="index.html">
-                <i class="fa-solid fa-droplet text-danger fs-1"></i>
-                <span style="font-family: var(--font-heading);">LifeLink</span>
-            </a>
-            <p class="text-secondary mt-1">AI-Powered Blood Donation Network</p>
-        </div>
-
-        <!-- Login Card -->
-        <div class="glass-card p-4 p-sm-5">
-            <h3 class="fw-bold mb-4 text-center">Account Sign In</h3>
-            
-            <!-- Login Role Tabs -->
-            <ul class="nav nav-pills mb-4 nav-justified" id="roleTab" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="donor-tab" type="button" onclick="setLoginRole('donor')">
-                        <i class="fa-solid fa-hand-holding-heart me-1"></i>Donor
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" id="patient-tab" type="button" onclick="setLoginRole('patient')">
-                        <i class="fa-solid fa-bed-pulse me-1"></i>Patient
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" id="admin-tab" type="button" onclick="setLoginRole('admin')">
-                        <i class="fa-solid fa-user-gear me-1"></i>Admin
-                    </button>
-                </li>
-            </ul>
-
-            <!-- Form -->
-            <form id="login-form">
-                <!-- Hidden input to track role -->
-                <input type="hidden" id="login-role" value="donor">
+    <div class="container-fluid p-0">
+        <div class="row g-0 min-vh-100">
+            <!-- Left Side: Branding / Image (Hidden on mobile) -->
+            <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-center align-items-center position-relative" style="background: url('assets/healthcare-research.png') center/cover no-repeat;">
+                <!-- Dark Overlay -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-75"></div>
                 
-                <div class="mb-3">
-                    <label for="login-email" class="form-label fw-bold">Email Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="fa-solid fa-envelope text-secondary"></i></span>
-                        <input type="email" class="form-control border-start-0" id="login-email" placeholder="name@domain.com" required>
+                <div class="position-relative z-1 text-center p-5 animate-fade-in text-white">
+                    <a href="index.html" class="text-decoration-none">
+                        <i class="fa-solid fa-droplet text-danger mb-4" style="font-size: 5rem; filter: drop-shadow(0 0 15px rgba(220,53,69,0.5));"></i>
+                    </a>
+                    <h1 class="display-3 fw-bold mb-3" style="font-family: var(--font-heading);">LifeLink</h1>
+                    <p class="lead fw-light text-white-50 mx-auto" style="max-width: 400px;">
+                        Join the world's most advanced AI-powered blood donation network. Your single donation can save up to 3 lives.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Side: Auth Form -->
+            <div class="col-lg-6 d-flex align-items-center justify-content-center p-4">
+                <div class="w-100 animate-fade-in" style="max-width: 480px;">
+                    
+                    <!-- Brand Link (Visible only on mobile) -->
+                    <div class="text-center mb-4 d-lg-none">
+                        <a class="d-inline-flex align-items-center gap-2 text-decoration-none fs-2 fw-bold text-dark" href="index.html">
+                            <i class="fa-solid fa-droplet text-danger fs-1"></i>
+                            <span style="font-family: var(--font-heading);">LifeLink</span>
+                        </a>
+                        <p class="text-secondary mt-1">AI-Powered Blood Donation Network</p>
+                    </div>
+
+                    <!-- Login Card -->
+                    <div class="glass-card shadow-premium p-4 p-sm-5 border-0 rounded-4">
+                        <h3 class="fw-bold mb-4 text-center">Account Sign In</h3>
+                        
+                        <!-- Login Role Tabs -->
+                        <ul class="nav nav-pills mb-4 nav-justified" id="roleTab" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active fw-bold" id="donor-tab" type="button" onclick="setLoginRole('donor')">
+                                    <i class="fa-solid fa-hand-holding-heart me-1"></i>Donor
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link fw-bold" id="patient-tab" type="button" onclick="setLoginRole('patient')">
+                                    <i class="fa-solid fa-bed-pulse me-1"></i>Patient
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link fw-bold" id="admin-tab" type="button" onclick="setLoginRole('admin')">
+                                    <i class="fa-solid fa-user-gear me-1"></i>Admin
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Form -->
+                        <form id="login-form">
+                            <!-- Hidden input to track role -->
+                            <input type="hidden" id="login-role" value="donor">
+                            
+                            <div class="mb-3">
+                                <label for="login-email" class="form-label fw-bold">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="fa-solid fa-envelope text-secondary"></i></span>
+                                    <input type="email" class="form-control border-start-0" id="login-email" placeholder="name@domain.com" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="login-password" class="form-label fw-bold mb-0">Password</label>
+                                    <a href="#" class="fs-8 text-danger fw-bold text-decoration-none" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password?</a>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="fa-solid fa-lock text-secondary"></i></span>
+                                    <input type="password" class="form-control border-start-0" id="login-password" placeholder="••••••••" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-premium w-100 py-3 fw-bold mb-3">
+                                <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In
+                            </button>
+
+                            <!-- Helpful Demo Assist Alerts -->
+                            <div class="alert alert-info py-2 px-3 fs-8 mb-4 border-0 rounded-md">
+                                <i class="fa-solid fa-lightbulb me-1"></i><strong>Demo Help</strong>:
+                                <br>• <strong>Donor</strong>: `john.doe@gmail.com` with `password123`
+                                <br>• <strong>Patient</strong>: `sarah.connor@gmail.com` with `password123`
+                                <br>• <strong>Admin</strong>: `admin@lifelink.com` with `admin123`
+                            </div>
+
+                            <div class="text-center fs-7 text-secondary">
+                                Don't have an account? <a href="register.html" class="fw-bold text-danger text-decoration-none">Register here</a>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="index.html" class="text-secondary text-decoration-none fs-7"><i class="fa-solid fa-arrow-left me-1"></i> Back to Home</a>
                     </div>
                 </div>
-
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label for="login-password" class="form-label fw-bold mb-0">Password</label>
-                        <a href="#" class="fs-8 text-danger" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password?</a>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="fa-solid fa-lock text-secondary"></i></span>
-                        <input type="password" class="form-control border-start-0" id="login-password" placeholder="••••••••" required>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-premium w-100 py-3 fw-bold mb-3">
-                    <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In
-                </button>
-
-                <!-- Helpful Demo Assist Alerts -->
-                <div class="alert alert-info py-2 px-3 fs-8 mb-4 border-0 rounded-md">
-                    <i class="fa-solid fa-lightbulb me-1"></i><strong>Demo Help</strong>:
-                    <br>• <strong>Donor</strong>: `john.doe@gmail.com` with `password123`
-                    <br>• <strong>Patient</strong>: `sarah.connor@gmail.com` with `password123`
-                    <br>• <strong>Admin</strong>: `admin@lifelink.com` with `admin123`
-                </div>
-
-                <div class="text-center fs-7 text-secondary">
-                    Don't have an account? <a href="register.html" class="fw-bold text-danger">Register here</a>
-                </div>
-            </form>
-        </div>
-        
-        <div class="text-center mt-4">
-            <a href="index.html" class="text-secondary fs-7"><i class="fa-solid fa-arrow-left me-1"></i>Back to Home</a>
+            </div>
         </div>
     </div>
 

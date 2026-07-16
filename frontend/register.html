@@ -44,37 +44,58 @@
         }
     </style>
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+<body class="bg-light">
 
-    <div class="container animate-fade-in my-5" style="max-width: 620px;">
-        <!-- Brand Link -->
-        <div class="text-center mb-4">
-            <a class="d-inline-flex align-items-center gap-2 text-decoration-none fs-2 fw-bold text-dark" href="index.html">
-                <i class="fa-solid fa-droplet text-danger fs-1"></i>
-                <span style="font-family: var(--font-heading);">LifeLink</span>
-            </a>
-            <p class="text-secondary mt-1">AI-Powered Blood Donation Network</p>
-        </div>
+    <div class="container-fluid p-0">
+        <div class="row g-0 min-vh-100">
+            <!-- Left Side: Branding / Image (Hidden on mobile) -->
+            <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-center align-items-center position-relative" style="background: url('assets/healthcare-research.png') center/cover no-repeat;">
+                <!-- Dark Overlay -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-75"></div>
+                
+                <div class="position-relative z-1 text-center p-5 animate-fade-in text-white">
+                    <a href="index.html" class="text-decoration-none">
+                        <i class="fa-solid fa-droplet text-danger mb-4" style="font-size: 5rem; filter: drop-shadow(0 0 15px rgba(220,53,69,0.5));"></i>
+                    </a>
+                    <h1 class="display-3 fw-bold mb-3" style="font-family: var(--font-heading);">LifeLink</h1>
+                    <p class="lead fw-light text-white-50 mx-auto" style="max-width: 400px;">
+                        Join the world's most advanced AI-powered blood donation network. Your single donation can save up to 3 lives.
+                    </p>
+                </div>
+            </div>
 
-        <!-- Registration Card -->
-        <div class="glass-card p-4 p-sm-5">
-            <h3 class="fw-bold mb-4 text-center">Create Account</h3>
-            
-            <!-- Registration Role Tabs -->
-            <ul class="nav nav-pills mb-4 nav-justified" id="regRoleTab" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="reg-donor-tab" type="button" onclick="setRegRole('donor')">
-                        <i class="fa-solid fa-hand-holding-heart me-1"></i>Register as Donor
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" id="reg-patient-tab" type="button" onclick="setRegRole('patient')">
-                        <i class="fa-solid fa-bed-pulse me-1"></i>Register as Patient
-                    </button>
-                </li>
-            </ul>
+            <!-- Right Side: Auth Form -->
+            <div class="col-lg-7 d-flex align-items-center justify-content-center p-4">
+                <div class="w-100 animate-fade-in" style="max-width: 620px;">
+                    
+                    <!-- Brand Link (Visible only on mobile) -->
+                    <div class="text-center mb-4 d-lg-none">
+                        <a class="d-inline-flex align-items-center gap-2 text-decoration-none fs-2 fw-bold text-dark" href="index.html">
+                            <i class="fa-solid fa-droplet text-danger fs-1"></i>
+                            <span style="font-family: var(--font-heading);">LifeLink</span>
+                        </a>
+                        <p class="text-secondary mt-1">AI-Powered Blood Donation Network</p>
+                    </div>
 
-            <!-- Form -->
+                    <!-- Registration Card -->
+                    <div class="glass-card shadow-premium p-4 p-sm-5 border-0 rounded-4">
+                        <h3 class="fw-bold mb-4 text-center">Create Account</h3>
+                        
+                        <!-- Registration Role Tabs -->
+                        <ul class="nav nav-pills mb-4 nav-justified" id="regRoleTab" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active fw-bold" id="reg-donor-tab" type="button" onclick="setRegRole('donor')">
+                                    <i class="fa-solid fa-hand-holding-heart me-1"></i>Register as Donor
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link fw-bold" id="reg-patient-tab" type="button" onclick="setRegRole('patient')">
+                                    <i class="fa-solid fa-bed-pulse me-1"></i>Register as Patient
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Form -->
             <form id="register-form">
                 <!-- Hidden inputs: role + geocoded lat/lon from pincode -->
                 <input type="hidden" id="register-role" value="donor">
@@ -215,19 +236,20 @@
                 </button>
 
                 <div class="text-center fs-7 text-secondary">
-                    Already have an account? <a href="login.html" class="fw-bold text-danger">Sign in instead</a>
+                    Already have an account? <a href="login.html" class="fw-bold text-danger text-decoration-none">Sign in instead</a>
                 </div>
             </form>
         </div>
         
         <div class="text-center mt-4">
-            <a href="index.html" class="text-secondary fs-7">
+            <a href="index.html" class="text-secondary text-decoration-none fs-7">
                 <i class="fa-solid fa-arrow-left me-1"></i>Back to Home
             </a>
         </div>
     </div>
-
-    <!-- Toast Container -->
+</div>
+</div>
+</div>    <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
     <!-- Bootstrap 5 JS -->
