@@ -215,20 +215,32 @@
 
             <!-- AI RECOMMENDATION MATCH RANKINGS -->
             <div class="row g-4 mt-2 animate-fade-in" id="map-recommendations-row">
-                <div class="col-12">
-                    <div class="glass-card p-4" id="ai-recommendations-card">
+                <div class="col-xl-8">
+                    <div class="glass-card p-4 h-100" id="ai-recommendations-card">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h4 class="fw-bold mb-0">
-                                <i class="fa-solid fa-brain text-danger me-2"></i>AI Match Recommendations
-                            </h4>
-                            <span class="badge bg-danger-light text-danger fw-bold" id="req-match-target-group">Type O- Needed</span>
+                            <h4 class="fw-bold mb-0"><i class="fa-solid fa-brain text-danger me-2"></i>AI Match Recommendations</h4>
+                            <span class="badge bg-danger-light text-danger fs-8" id="req-match-target-group">No Request Selected</span>
                         </div>
-                        <p class="text-secondary fs-7 mb-4">Matches are ranked using clinical parameters, real-time geodetic tracking, and availability forecasts. Compatible donors with matching blood group will show their contact details.</p>
+                        <p class="text-secondary fs-7 mb-4">Powered by Scikit-Learn. Prioritizes matching blood types, historical response rates, proximity, and availability scores.</p>
                         
-                        <div class="d-flex flex-column gap-3" id="ai-matches-list-container" style="max-height: 480px; overflow-y: auto; padding-right: 5px;">
-                            <div class="text-center py-5 text-secondary">
-                                <i class="fa-solid fa-info-circle me-1 fs-5"></i>
-                                <br>Select an active, pending request from the table above to view AI recommendations and execute matched donor alerts.
+                        <div class="d-flex flex-column gap-3" id="ai-matches-list-container">
+                            <div class="text-center py-5 text-secondary fs-7">
+                                <i class="fa-solid fa-hand-pointer fs-4 text-primary mb-2"></i>
+                                <br>Select an active emergency request from your list above to generate AI recommendations.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AVAILABLE VOLUNTEER DONORS -->
+                <div class="col-xl-4">
+                    <div class="glass-card p-4 h-100">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-hand-holding-medical text-success me-2"></i>Recent Volunteer Donors</h5>
+                        <p class="text-secondary fs-8 mb-4">Donors who recently logged voluntary donations and are ready to help!</p>
+                        
+                        <div class="d-flex flex-column gap-3" id="volunteer-donors-container">
+                            <div class="text-center py-4 text-secondary fs-8">
+                                <i class="fa-solid fa-spinner fa-spin me-2"></i>Loading volunteers...
                             </div>
                         </div>
                     </div>
@@ -291,6 +303,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             protectRoute('patient');
             loadPatientRequests();
+            loadAvailableVolunteerDonors();
             loadPatientNotifications();
         });
     </script>

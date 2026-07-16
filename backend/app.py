@@ -176,10 +176,15 @@ def get_public_stats():
         # Unique hospitals count
         cursor.execute("SELECT COUNT(*) FROM hospitals_and_banks")
         hospitals_count = cursor.fetchone()[0] or 0
+
+        # Total blood requests (patient requests)
+        cursor.execute("SELECT COUNT(*) FROM blood_requests")
+        total_requests = cursor.fetchone()[0] or 0
     except Exception:
         donors_count = 0
         completed_matches = 0
         hospitals_count = 0
+        total_requests = 0
     finally:
         conn.close()
         
@@ -189,6 +194,7 @@ def get_public_stats():
             'donors': donors_count,
             'completed': completed_matches,
             'hospitals': hospitals_count,
+            'total_requests': total_requests,
             'lives_saved': completed_matches * 3
         }
     })
@@ -1163,14 +1169,33 @@ def voluntary_donation(current_user):
         (new_total, donation_date, json.dumps(badges_list), new_ai_score, donor_id)
     )
     
-    # Notification
+    # Notify self (donor)
     cursor.execute(
         "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
         (current_user['id'], 'Voluntary Donation Logged!',
-         f'Thank you, {donor_name}! You successfully logged a voluntary donation of {units} units. Download your official LifeLink certificate now.',
+         f'Thank you, {donor_name}! You successfully logged a voluntary donation of {units} units at {hospital_name}. Download your certificate now.',
          'success')
     )
-    
+
+    # Fetch donor's blood group to notify matching patients
+    cursor.execute("SELECT blood_group FROM donors WHERE id = ?", (donor_id,))
+    donor_bg_row = cursor.fetchone()
+    if donor_bg_row:
+        donor_blood_group = donor_bg_row['blood_group']
+        # Find pending requests whose needed blood group is compatible with this donor
+        cursor.execute("SELECT DISTINCT patient_id, blood_group, hospital_name FROM blood_requests WHERE status = 'Pending'")
+        pending_requests = cursor.fetchall()
+        for pr in pending_requests:
+            compat_score = ai_models.is_blood_compatible(donor_blood_group, pr['blood_group'])
+            if compat_score > 0:
+                cursor.execute(
+                    "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
+                    (pr['patient_id'],
+                     f'New Compatible Donor Available!',
+                     f'Donor {donor_name} ({donor_blood_group}) just logged a voluntary donation at {hospital_name}. They may be available for your {pr["blood_group"]} request. Check your AI match recommendations!',
+                     'info')
+                )
+
     conn.commit()
     conn.close()
     
@@ -1197,7 +1222,7 @@ def get_donor_history(current_user):
         return jsonify({'status': 'error', 'message': 'Donor profile not found!'}), 404
         
     cursor.execute("""
-        SELECT dh.*, br.hospital_name, br.blood_group, p.name as patient_name
+        SELECT dh.*, br.hospital_name as request_hospital, br.blood_group as request_bg, p.name as patient_name
         FROM donation_history dh
         LEFT JOIN blood_requests br ON dh.request_id = br.id
         LEFT JOIN patients p ON br.patient_id = p.user_id
@@ -1207,7 +1232,47 @@ def get_donor_history(current_user):
     
     history = [dict(row) for row in cursor.fetchall()]
     conn.close()
-    return jsonify({'status': 'success', 'data': history})
+    
+    # Fix up presentation fields
+    for h in history:
+        # If no request_hospital, it's a voluntary donation
+        if not h['request_hospital'] and not h['request_id']:
+            h['hospital_name'] = 'Voluntary Donation Center'
+            h['patient_name'] = 'General Pool / Blood Bank'
+            h['blood_group'] = ''
+        else:
+            h['hospital_name'] = h['request_hospital']
+            h['blood_group'] = h['request_bg']
+            
+    return jsonify({
+        'status': 'success',
+        'data': history
+    })
+
+@app.route('/api/donors/available', methods=['GET'])
+@token_required
+def get_available_donors(current_user):
+    # Returns donors who have logged recent voluntary donations or are highly available
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Let's get donors who have recent voluntary donations (request_id IS NULL)
+    cursor.execute("""
+        SELECT d.id, d.name, d.blood_group, d.latitude, d.longitude, d.phone, d.ai_donor_score, dh.donation_date, dh.units
+        FROM donors d
+        JOIN donation_history dh ON d.id = dh.donor_id
+        WHERE dh.request_id IS NULL AND d.is_available = 1
+        ORDER BY dh.id DESC
+        LIMIT 20
+    """)
+    recent_vols = [dict(row) for row in cursor.fetchall()]
+    
+    conn.close()
+    
+    return jsonify({
+        'status': 'success',
+        'data': recent_vols
+    })
 
 @app.route('/api/donor/certificate/<string:code>', methods=['GET'])
 def get_certificate_details(code):

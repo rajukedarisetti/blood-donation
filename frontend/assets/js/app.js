@@ -636,6 +636,63 @@ async function loadPatientRequests() {
     }
 }
 
+async function loadAvailableVolunteerDonors() {
+    const token = getAuthToken();
+    if (!token) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/donors/available`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        
+        const container = document.getElementById('volunteer-donors-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (!result.data || result.data.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-secondary fs-8">
+                    <i class="fa-solid fa-bed fs-4 text-secondary mb-2"></i>
+                    <br>No recent voluntary donors online right now.
+                </div>
+            `;
+            return;
+        }
+        
+        result.data.forEach(donor => {
+            const dateStr = donor.donation_date ? new Date(donor.donation_date).toLocaleDateString() : 'Recently';
+            container.innerHTML += `
+                <div class="glass-card p-3 border border-success-light shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">${donor.name}</h6>
+                            <span class="badge bg-danger mt-1">${donor.blood_group}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success text-white fs-9 p-1 px-2"><i class="fa-solid fa-check-circle me-1"></i>Available</span>
+                        </div>
+                    </div>
+                    <p class="fs-8 text-secondary mb-2">
+                        <i class="fa-solid fa-hand-holding-heart text-danger me-1"></i>
+                        Donated ${donor.units || 1} unit(s) voluntarily on <strong>${dateStr}</strong>
+                    </p>
+                    <a href="tel:${donor.phone}" class="btn btn-sm btn-outline-success w-100 fs-8 fw-bold">
+                        <i class="fa-solid fa-phone me-1"></i>Contact Donor
+                    </a>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error("Load available donors error:", error);
+        const container = document.getElementById('volunteer-donors-container');
+        if (container) {
+            container.innerHTML = `<div class="text-center py-4 text-danger fs-8">Failed to load volunteers.</div>`;
+        }
+    }
+}
+
 // Raising new emergency blood request (assesses AI priority level)
 const emergencyRequestForm = document.getElementById('emergency-request-form');
 if (emergencyRequestForm) {
@@ -1091,7 +1148,7 @@ async function loadDonorAlerts() {
                                 <div>
                                     <span class="${priorityBadgeClass} mb-2">${req.priority} Emergency</span>
                                     <h5 class="fw-bold mb-1 text-dark">${req.hospital_name}</h5>
-                                    <span class="fs-8 text-secondary"><i class="fa-solid fa-map-marker-alt text-danger me-1"></i>Geodetic Proximity: ${round(dist, 1)} km</span>
+                                    <span class="fs-8 text-secondary"><i class="fa-solid fa-map-marker-alt text-danger me-1"></i>Geodetic Proximity: ${dist.toFixed(1)} km</span>
                                 </div>
                                 <div class="text-end">
                                     <span class="fs-9 text-secondary d-block fw-bold mb-1">RECIPIENT GROUP</span>
