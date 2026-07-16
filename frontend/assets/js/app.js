@@ -392,12 +392,13 @@ const registerForm = document.getElementById('register-form');
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('register-email').value;
+        const email    = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
-        const name = document.getElementById('register-name').value;
-        const phone = document.getElementById('register-phone').value;
-        const role = document.getElementById('register-role').value;
-        const latitude = document.getElementById('register-latitude').value;
+        const name     = document.getElementById('register-name').value;
+        const phone    = document.getElementById('register-phone').value;
+        const role     = document.getElementById('register-role').value;
+        const pincode  = document.getElementById('register-pincode') ? document.getElementById('register-pincode').value.trim() : '';
+        const latitude  = document.getElementById('register-latitude').value;
         const longitude = document.getElementById('register-longitude').value;
         
         // Validate Indian phone number: must start with +91 and be 10 digits after
@@ -407,8 +408,15 @@ if (registerForm) {
             document.getElementById('register-phone').focus();
             return;
         }
+
+        // Ensure pincode was searched & geocoded (lat/lon must be populated)
+        if (!latitude || !longitude || latitude === '' || longitude === '') {
+            showToast("Location Required", "Please enter your 6-digit pincode and click Search to locate your area.", "warning");
+            if (document.getElementById('register-pincode')) document.getElementById('register-pincode').focus();
+            return;
+        }
         
-        const payload = { email, password, name, phone, role, latitude, longitude };
+        const payload = { email, password, name, phone, role, latitude, longitude, pincode };
         
         if (role === 'donor') {
             payload.blood_group = document.getElementById('register-blood-group').value;
