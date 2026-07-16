@@ -216,9 +216,9 @@ async function loadPublicStats() {
     const donorsEl = document.getElementById('stat-donors');
     const completedEl = document.getElementById('stat-completed');
     const hospitalsEl = document.getElementById('stat-hospitals');
-    const livesEl = document.getElementById('stat-lives');
+    const requestsEl = document.getElementById('stat-requests');
     
-    if (!donorsEl && !completedEl && !hospitalsEl && !livesEl) return;
+    if (!donorsEl && !completedEl && !hospitalsEl && !requestsEl) return;
     
     try {
         const response = await fetch(`${API_BASE}/public/stats`);
@@ -228,7 +228,11 @@ async function loadPublicStats() {
             if (donorsEl) donorsEl.textContent = `${data.donors.toLocaleString()}+`;
             if (completedEl) completedEl.textContent = `${data.completed.toLocaleString()}+`;
             if (hospitalsEl) hospitalsEl.textContent = data.hospitals.toLocaleString();
-            if (livesEl) livesEl.textContent = `${data.lives_saved.toLocaleString()}+`;
+            // Show patient requests count (starts at 0, increments as requests are registered)
+            if (requestsEl) {
+                const requestCount = data.total_requests !== undefined ? data.total_requests : (data.completed || 0);
+                requestsEl.textContent = requestCount > 0 ? `${requestCount.toLocaleString()}+` : '0';
+            }
         }
     } catch (error) {
         console.error("Failed to load public stats:", error);
@@ -396,6 +400,14 @@ if (registerForm) {
         const latitude = document.getElementById('register-latitude').value;
         const longitude = document.getElementById('register-longitude').value;
         
+        // Validate Indian phone number: must start with +91 and be 10 digits after
+        const indianPhoneRegex = /^\+91[6-9]\d{9}$/;
+        if (!indianPhoneRegex.test(phone)) {
+            showToast("Invalid Phone Number", "Please enter a valid Indian mobile number starting with +91 (e.g. +919876543210).", "warning");
+            document.getElementById('register-phone').focus();
+            return;
+        }
+        
         const payload = { email, password, name, phone, role, latitude, longitude };
         
         if (role === 'donor') {
@@ -549,6 +561,12 @@ async function loadPatientRequests() {
     const coordsEl = document.getElementById('patient-coords');
     if (coordsEl && user.profile) {
         coordsEl.textContent = `${parseFloat(user.profile.latitude).toFixed(4)}, ${parseFloat(user.profile.longitude).toFixed(4)}`;
+    }
+    
+    // Auto-fill patient's hospital from profile (read-only)
+    const hospitalInput = document.getElementById('req-hospital');
+    if (hospitalInput && user.profile && user.profile.hospital_name) {
+        hospitalInput.value = user.profile.hospital_name;
     }
     
     try {
@@ -742,12 +760,18 @@ async function selectPatientRequestForMatching(reqId, bloodGroup, lat, lon) {
             if (match.ai_availability_probability < 50) progressClass = 'bg-danger';
             else if (match.ai_availability_probability < 75) progressClass = 'bg-warning';
             
+            // Show phone number since blood group is already matched by AI
+            const phoneDisplay = match.phone 
+                ? `<span class="fs-8 text-success fw-semibold"><i class="fa-solid fa-phone me-1"></i><a href="tel:${match.phone}" class="text-success text-decoration-none">${match.phone}</a></span>`
+                : '';
+            
             container.innerHTML += `
                 <div class="glass-card p-3 border border-light shadow-sm" style="transition: none; transform: none;">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <h6 class="fw-bold mb-0 text-dark">${match.name} <span class="badge bg-danger ms-2">${match.blood_group}</span></h6>
                             <span class="fs-8 text-secondary"><i class="fa-solid fa-map-marker-alt me-1"></i>${match.distance_km} km away</span>
+                            ${phoneDisplay}
                         </div>
                         <div class="text-end">
                             <span class="badge bg-danger text-white fw-bold fs-8 p-2 shadow-sm">AI Score: ${match.ai_match_score}</span>

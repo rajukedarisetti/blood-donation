@@ -17,7 +17,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Leaflet.js CSS (Free Maps) -->
+    <!-- Leaflet.js CSS (Free Maps) - kept for compatibility -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <!-- Custom CSS -->
@@ -65,9 +65,7 @@
             <a href="#request-blood" class="sidebar-nav-link" id="link-request">
                 <i class="fa-solid fa-square-plus"></i>Raise Request
             </a>
-            <a href="#map-section" class="sidebar-nav-link" id="link-map">
-                <i class="fa-solid fa-map-location-dot"></i>Nearby Donors Map
-            </a>
+
             <a href="#notifications-tab" class="sidebar-nav-link" id="link-notifs">
                 <i class="fa-solid fa-bell"></i>Notifications
                 <span class="badge bg-danger text-white rounded-full fs-9 ms-auto d-none" id="notif-badge-count">0</span>
@@ -126,8 +124,9 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-bold">Target Hospital Name</label>
-                                <input type="text" class="form-control" id="req-hospital" placeholder="City General Hospital" required>
+                                <label class="form-label fw-bold"><i class="fa-solid fa-hospital me-1 text-danger"></i>Patient Hospital</label>
+                                <input type="text" class="form-control bg-light fw-semibold" id="req-hospital" placeholder="Loading your hospital..." readonly style="cursor: not-allowed;">
+                                <div class="form-text fs-9 text-muted"><i class="fa-solid fa-circle-info me-1"></i>Auto-filled from your registered hospital profile.</div>
                             </div>
 
                             <!-- AI PRIORITY PREDICTOR VITALS -->
@@ -214,65 +213,9 @@
                 </div>
             </div>
 
-            <!-- INTERACTIVE MAP & AI RECOMMENDATION LOG -->
+            <!-- AI RECOMMENDATION MATCH RANKINGS -->
             <div class="row g-4 mt-2 animate-fade-in" id="map-recommendations-row">
-                <!-- LEAFLET GEOMETRIC MAP -->
-                <div class="col-xl-6">
-                    <div class="glass-card p-4" id="map-section">
-                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                            <h4 class="fw-bold mb-0"><i class="fa-solid fa-map-location-dot text-danger me-2"></i>Location Map</h4>
-                            
-                            <!-- Map layer filter toggles -->
-                            <div class="btn-group btn-group-sm" role="group" id="map-layer-toggles">
-                                <input type="radio" class="btn-check" name="mapLayer" id="layer-donors" autocomplete="off" checked>
-                                <label class="btn btn-outline-danger" for="layer-donors"><i class="fa-solid fa-users me-1"></i>Donors</label>
-
-                                <input type="radio" class="btn-check" name="mapLayer" id="layer-facilities" autocomplete="off">
-                                <label class="btn btn-outline-danger" for="layer-facilities"><i class="fa-solid fa-hospital-user me-1"></i>Facilities</label>
-
-                                <input type="radio" class="btn-check" name="mapLayer" id="layer-all" autocomplete="off">
-                                <label class="btn btn-outline-danger" for="layer-all"><i class="fa-solid fa-circle-nodes me-1"></i>All</label>
-                            </div>
-
-                            <!-- Radius controller slider -->
-                            <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 border rounded-md fs-8">
-                                <label class="fw-bold text-secondary mb-0">Radius:</label>
-                                <span class="fw-bold text-danger" id="radius-value">15 km</span>
-                                <input type="range" class="form-range" min="5" max="50" step="5" id="map-radius-slider" value="15" style="width: 70px;">
-                            </div>
-                        </div>
-                        
-                        <div id="map"></div>
-                    </div>
-
-                    <!-- NEARBY HOSPITALS & BLOOD BANKS LIST -->
-                    <div class="glass-card p-4 mt-4" id="facilities-list-card">
-                        <h4 class="fw-bold mb-3"><i class="fa-solid fa-hospital-user text-danger me-2"></i>Nearby Hospitals & Blood Banks</h4>
-                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                            <table class="table table-hover align-middle fs-7 mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Type</th>
-                                        <th>Contact</th>
-                                        <th>Address</th>
-                                        <th class="text-end">Distance</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="facilities-table-body">
-                                    <tr>
-                                        <td colspan="5" class="text-center py-3 text-secondary">
-                                            Select a request to see nearby hospitals and blood banks.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- AI RECOMMENDATION MATCH RANKINGS -->
-                <div class="col-xl-6">
+                <div class="col-12">
                     <div class="glass-card p-4" id="ai-recommendations-card">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h4 class="fw-bold mb-0">
@@ -280,9 +223,9 @@
                             </h4>
                             <span class="badge bg-danger-light text-danger fw-bold" id="req-match-target-group">Type O- Needed</span>
                         </div>
-                        <p class="text-secondary fs-7 mb-4">Matches are ranked using clinical parameters, real-time geodetic tracking, and availability forecasts.</p>
+                        <p class="text-secondary fs-7 mb-4">Matches are ranked using clinical parameters, real-time geodetic tracking, and availability forecasts. Compatible donors with matching blood group will show their contact details.</p>
                         
-                        <div class="d-flex flex-column gap-3" id="ai-matches-list-container" style="max-height: 420px; overflow-y: auto; padding-right: 5px;">
+                        <div class="d-flex flex-column gap-3" id="ai-matches-list-container" style="max-height: 480px; overflow-y: auto; padding-right: 5px;">
                             <div class="text-center py-5 text-secondary">
                                 <i class="fa-solid fa-info-circle me-1 fs-5"></i>
                                 <br>Select an active, pending request from the table above to view AI recommendations and execute matched donor alerts.
