@@ -4,6 +4,8 @@ import jwt
 import math
 import random
 import sqlite3
+import urllib.request
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
@@ -690,33 +692,131 @@ def create_blood_request(current_user):
 def get_hospitals_and_banks():
     lat = request.args.get('latitude', type=float)
     lon = request.args.get('longitude', type=float)
-    max_dist = request.args.get('max_distance', default=15.0, type=float)
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hospitals_and_banks")
-    rows = cursor.fetchall()
-    conn.close()
+    max_dist = request.args.get('max_distance', default=50.0, type=float)
     
     results = []
-    for r in rows:
-        row_dict = dict(r)
-        if lat is not None and lon is not None:
-            dist = haversine(lat, lon, row_dict['latitude'], row_dict['longitude'])
-            row_dict['distance_km'] = round(dist, 2)
-            if dist <= max_dist:
-                results.append(row_dict)
-        else:
-            row_dict['distance_km'] = None
-            results.append(row_dict)
-            
-    # Sort by distance if coords provided
+    seen_names = set()
+    
+    # --- 1. Fetch real hospitals from OpenStreetMap Overpass API ---
     if lat is not None and lon is not None:
-        results.sort(key=lambda x: x['distance_km'])
+        try:
+            # Convert km radius to meters for Overpass API
+            radius_meters = int(max_dist * 1000)
+            
+            # Overpass QL query: fetch hospitals AND blood donation centers near coordinates
+            overpass_query = f"""
+            [out:json][timeout:25];
+            (
+              node["amenity"="hospital"](around:{radius_meters},{lat},{lon});
+              way["amenity"="hospital"](around:{radius_meters},{lat},{lon});
+              node["amenity"="blood_bank"](around:{radius_meters},{lat},{lon});
+              node["healthcare"="blood_bank"](around:{radius_meters},{lat},{lon});
+              node["amenity"="clinic"](around:{radius_meters},{lat},{lon});
+            );
+            out center tags;
+            """
+            
+            encoded_query = urllib.parse.urlencode({'data': overpass_query})
+            overpass_url = f"https://overpass-api.de/api/interpreter?{encoded_query}"
+            
+            req = urllib.request.Request(
+                overpass_url,
+                headers={'User-Agent': 'LifeLink-BloodDonation/1.0'}
+            )
+            with urllib.request.urlopen(req, timeout=20) as response:
+                osm_data = json.loads(response.read().decode('utf-8'))
+            
+            for element in osm_data.get('elements', []):
+                tags = element.get('tags', {})
+                name = tags.get('name') or tags.get('name:en')
+                if not name:
+                    continue
+                
+                # Get coordinates (nodes vs ways)
+                if element['type'] == 'node':
+                    elat = element.get('lat')
+                    elon = element.get('lon')
+                elif element['type'] == 'way' and 'center' in element:
+                    elat = element['center'].get('lat')
+                    elon = element['center'].get('lon')
+                else:
+                    continue
+                
+                if elat is None or elon is None:
+                    continue
+                
+                # Determine type
+                amenity = tags.get('amenity', '')
+                healthcare = tags.get('healthcare', '')
+                if 'blood' in amenity.lower() or 'blood' in healthcare.lower():
+                    facility_type = 'Blood Bank'
+                elif amenity == 'clinic':
+                    facility_type = 'Clinic'
+                else:
+                    facility_type = 'Hospital'
+                
+                phone = tags.get('phone') or tags.get('contact:phone') or tags.get('contact:mobile') or 'N/A'
+                address_parts = []
+                for addr_key in ['addr:housenumber', 'addr:street', 'addr:suburb', 'addr:city', 'addr:state']:
+                    val = tags.get(addr_key)
+                    if val:
+                        address_parts.append(val)
+                address = ', '.join(address_parts) if address_parts else tags.get('addr:full', 'See OpenStreetMap')
+                
+                dist = haversine(lat, lon, elat, elon)
+                name_key = name.lower().strip()
+                
+                if name_key not in seen_names:
+                    seen_names.add(name_key)
+                    results.append({
+                        'id': f'osm_{element["id"]}',
+                        'name': name,
+                        'type': facility_type,
+                        'phone': phone,
+                        'address': address,
+                        'latitude': elat,
+                        'longitude': elon,
+                        'distance_km': round(dist, 2),
+                        'source': 'OpenStreetMap'
+                    })
+        except Exception as osm_err:
+            print(f"[OSM Overpass] Failed to fetch: {osm_err}")
+    
+    # --- 2. Also merge internal database hospitals ---
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM hospitals_and_banks")
+        db_rows = cursor.fetchall()
+        conn.close()
         
+        for r in db_rows:
+            row_dict = dict(r)
+            name_key = row_dict.get('name', '').lower().strip()
+            if lat is not None and lon is not None:
+                dist = haversine(lat, lon, row_dict['latitude'], row_dict['longitude'])
+                row_dict['distance_km'] = round(dist, 2)
+                row_dict['source'] = 'LifeLink DB'
+                if dist <= max_dist and name_key not in seen_names:
+                    seen_names.add(name_key)
+                    results.append(row_dict)
+            else:
+                row_dict['distance_km'] = None
+                row_dict['source'] = 'LifeLink DB'
+                if name_key not in seen_names:
+                    seen_names.add(name_key)
+                    results.append(row_dict)
+    except Exception as db_err:
+        print(f"[DB Hospitals] Failed: {db_err}")
+    
+    # Sort by distance if coordinates provided
+    if lat is not None and lon is not None:
+        results.sort(key=lambda x: x.get('distance_km') or 9999)
+    
     return jsonify({
         'status': 'success',
-        'data': results
+        'data': results,
+        'total': len(results)
     })
 
 @app.route('/api/requests', methods=['GET'])

@@ -463,10 +463,10 @@ async function fetchNearbyHospitalsForRegistration(lat, lon) {
     if (!select) return;
 
     select.disabled = true;
-    select.innerHTML = '<option value="">\uD83D\uDD04 Loading nearby hospitals...</option>';
+    select.innerHTML = '<option value="">🔄 Fetching real hospitals near your location...</option>';
     if (statusEl) {
         statusEl.className = 'form-text fs-8 text-info mt-1';
-        statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Searching hospitals within 50km of your location...';
+        statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Querying live hospital data from OpenStreetMap within 50km...';
     }
 
     try {
@@ -476,16 +476,18 @@ async function fetchNearbyHospitalsForRegistration(lat, lon) {
         select.innerHTML = '<option value="" disabled selected>Select a nearby hospital or blood bank...</option>';
 
         if (result.status === 'success' && result.data && result.data.length > 0) {
-            const hospitals = result.data.filter(h => h.type === 'Hospital');
+            const hospitals  = result.data.filter(h => h.type === 'Hospital');
             const bloodBanks = result.data.filter(h => h.type === 'Blood Bank');
+            const clinics    = result.data.filter(h => h.type === 'Clinic');
 
             if (hospitals.length > 0) {
                 const grp1 = document.createElement('optgroup');
-                grp1.label = '\uD83C\uDFE5 Hospitals';
+                grp1.label = '🏥 Hospitals';
                 hospitals.forEach(h => {
                     const opt = document.createElement('option');
                     opt.value = h.name;
-                    opt.textContent = `${h.name}  \u2014  ${h.distance_km} km away`;
+                    const srcTag = h.source === 'OpenStreetMap' ? ' 🗺️' : '';
+                    opt.textContent = `${h.name}${srcTag}  —  ${h.distance_km} km away`;
                     grp1.appendChild(opt);
                 });
                 select.appendChild(grp1);
@@ -493,32 +495,45 @@ async function fetchNearbyHospitalsForRegistration(lat, lon) {
 
             if (bloodBanks.length > 0) {
                 const grp2 = document.createElement('optgroup');
-                grp2.label = '\uD83E\uDE78 Blood Banks';
+                grp2.label = '🩸 Blood Banks';
                 bloodBanks.forEach(h => {
                     const opt = document.createElement('option');
                     opt.value = h.name;
-                    opt.textContent = `${h.name}  \u2014  ${h.distance_km} km away`;
+                    const srcTag = h.source === 'OpenStreetMap' ? ' 🗺️' : '';
+                    opt.textContent = `${h.name}${srcTag}  —  ${h.distance_km} km away`;
                     grp2.appendChild(opt);
                 });
                 select.appendChild(grp2);
             }
 
+            if (clinics.length > 0) {
+                const grp3 = document.createElement('optgroup');
+                grp3.label = '🏨 Clinics';
+                clinics.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.name;
+                    opt.textContent = `${h.name} 🗺️  —  ${h.distance_km} km away`;
+                    grp3.appendChild(opt);
+                });
+                select.appendChild(grp3);
+            }
+
             const customOpt = document.createElement('option');
             customOpt.value = 'custom';
-            customOpt.textContent = '\u270F\uFE0F Other / Enter hospital name manually...';
+            customOpt.textContent = '✏️ Other / Enter hospital name manually...';
             select.appendChild(customOpt);
 
             if (statusEl) {
                 statusEl.className = 'form-text fs-8 text-success mt-1';
-                statusEl.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>Found <strong>${result.data.length}</strong> facility(s) near your location, sorted by distance.`;
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>Found <strong>${result.data.length}</strong> live facilities near your location (🗺️ = from OpenStreetMap), sorted by distance.`;
             }
         } else {
-            select.innerHTML = '<option value="custom">\u270F\uFE0F No registered facilities found nearby \u2014 enter name manually</option>';
+            select.innerHTML = '<option value="custom">✏️ No facilities found nearby — enter name manually</option>';
             if (customGroup) customGroup.classList.remove('d-none');
             if (customInput) customInput.required = true;
             if (statusEl) {
                 statusEl.className = 'form-text fs-8 text-warning mt-1';
-                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>No registered facilities within 50km. Enter the hospital name below.';
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>No hospitals found within 50km via OpenStreetMap. Enter the hospital name below.';
             }
         }
 
@@ -537,7 +552,7 @@ async function fetchNearbyHospitalsForRegistration(lat, lon) {
 
     } catch (error) {
         console.error("Failed to fetch nearby hospitals:", error);
-        select.innerHTML = '<option value="custom">\u270F\uFE0F Could not load hospitals \u2014 enter manually</option>';
+        select.innerHTML = '<option value="custom">✏️ Could not load hospitals — enter manually</option>';
         select.disabled = false;
         if (customGroup) customGroup.classList.remove('d-none');
         if (customInput) customInput.required = true;
