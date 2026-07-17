@@ -180,6 +180,10 @@ def get_public_stats():
         # Total blood requests (patient requests)
         cursor.execute("SELECT COUNT(*) FROM blood_requests")
         total_requests = cursor.fetchone()[0] or 0
+        
+        # Registered patients count
+        cursor.execute("SELECT COUNT(*) FROM patients")
+        patients_count = cursor.fetchone()[0] or 0
     except Exception:
         donors_count = 0
         completed_matches = 0
@@ -195,7 +199,8 @@ def get_public_stats():
             'completed': completed_matches,
             'hospitals': hospitals_count,
             'total_requests': total_requests,
-            'lives_saved': completed_matches * 3
+            'lives_saved': completed_matches * 3,
+            'patients': patients_count
         }
     })
 

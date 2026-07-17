@@ -216,9 +216,9 @@ async function loadPublicStats() {
     const donorsEl = document.getElementById('stat-donors');
     const completedEl = document.getElementById('stat-completed');
     const hospitalsEl = document.getElementById('stat-hospitals');
-    const requestsEl = document.getElementById('stat-requests');
+    const patientsEl = document.getElementById('stat-patients');
     
-    if (!donorsEl && !completedEl && !hospitalsEl && !requestsEl) return;
+    if (!donorsEl && !completedEl && !hospitalsEl && !patientsEl) return;
     
     try {
         const response = await fetch(`${API_BASE}/public/stats`);
@@ -228,10 +228,11 @@ async function loadPublicStats() {
             if (donorsEl) donorsEl.textContent = `${data.donors.toLocaleString()}+`;
             if (completedEl) completedEl.textContent = `${data.completed.toLocaleString()}+`;
             if (hospitalsEl) hospitalsEl.textContent = data.hospitals.toLocaleString();
-            // Show patient requests count (starts at 0, increments as requests are registered)
-            if (requestsEl) {
-                const requestCount = data.total_requests !== undefined ? data.total_requests : (data.completed || 0);
-                requestsEl.textContent = requestCount > 0 ? `${requestCount.toLocaleString()}+` : '0';
+            
+            // Show registered patients count (starts at 0, increments)
+            if (patientsEl) {
+                const patientCount = data.patients || 0;
+                patientsEl.textContent = patientCount > 0 ? `${patientCount.toLocaleString()}+` : '0';
             }
         }
     } catch (error) {
@@ -395,7 +396,8 @@ if (registerForm) {
         const email    = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
         const name     = document.getElementById('register-name').value;
-        const phone    = document.getElementById('register-phone').value;
+        const rawPhone = document.getElementById('register-phone').value.trim();
+        const phone    = "+91" + rawPhone.replace(/^\+91/, ''); // Ensure +91 is prepended exactly once
         const role     = document.getElementById('register-role').value;
         const pincode  = document.getElementById('register-pincode') ? document.getElementById('register-pincode').value.trim() : '';
         const latitude  = document.getElementById('register-latitude').value;

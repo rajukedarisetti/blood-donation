@@ -109,12 +109,12 @@
                     </div>
                     <div class="col-md-6">
                         <label for="register-phone" class="form-label fw-bold">Phone Number</label>
-                        <input type="tel" class="form-control" id="register-phone"
-                               placeholder="+91XXXXXXXXXX"
-                               pattern="\+91[6-9]\d{9}"
-                               title="Must be a valid Indian number starting with +91 followed by 10 digits" required>
-                        <div class="form-text fs-9 text-muted">
-                            <i class="fa-solid fa-flag me-1"></i>India only &mdash; format: +91XXXXXXXXXX
+                        <div class="input-group">
+                            <span class="input-group-text bg-white fw-bold">+91</span>
+                            <input type="tel" class="form-control border-start-0" id="register-phone"
+                                   placeholder="XXXXXXXXXX"
+                                   pattern="[6-9]\d{9}"
+                                   title="Must be a valid 10-digit Indian number" required>
                         </div>
                     </div>
                 </div>
