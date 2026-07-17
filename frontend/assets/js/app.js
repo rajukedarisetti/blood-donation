@@ -2021,6 +2021,7 @@ function setupVoluntaryDonationSubmission() {
         const select = document.getElementById('vol-hospital');
         const customInput = document.getElementById('vol-custom-hospital');
         const unitsInput = document.getElementById('vol-units');
+        const weightInput = document.getElementById('vol-weight');
         const dateInput = document.getElementById('vol-date');
         
         let hospitalName = select.value;
@@ -2029,7 +2030,14 @@ function setupVoluntaryDonationSubmission() {
         }
         
         const units = parseInt(unitsInput.value);
+        const weight = parseFloat(weightInput.value);
         const donation_date = dateInput.value;
+
+        // Weight validation (Must be > 50kg)
+        if (weight <= 50) {
+            showToast("Eligibility Error", "Weight must be greater than 50kg to donate blood safely.", "error");
+            return;
+        }
         
         showToast("Fulfilling Donation", "Logging voluntary transaction and generating certificate...", "info");
         
