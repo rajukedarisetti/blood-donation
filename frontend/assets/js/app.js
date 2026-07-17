@@ -1529,7 +1529,6 @@ async function loadAdminAnalytics() {
         document.getElementById('admin-stat-users').textContent = data.statistics.total_users;
         document.getElementById('admin-stat-donors').textContent = data.statistics.total_donors;
         document.getElementById('admin-stat-online').textContent = data.statistics.available_donors;
-        document.getElementById('admin-stat-saved').textContent = data.statistics.total_units_donated * 3 || '-'; // simulated lives saved multiplier
         
         // Populate users database table
         const usersTbody = document.getElementById('admin-users-table-body');
